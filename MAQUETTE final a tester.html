@@ -27,6 +27,11 @@
         table { width: 100%; border-collapse: collapse; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
         .img-mini { width: 50px; height: 50px; object-fit: cover; }
+
+        /* ALIGNEMENT DES BOUTONS PHOTO */
+        .photo-group { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .photo-group input { margin: 0; flex: 1; }
+        .btn-clou { background: #2ecc71; color: white; padding: 10px; border-radius: 5px; font-size: 14px; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -58,33 +63,19 @@
         <div class="card">
             <button onclick="changerPage('user')" style="background:none; color:var(--secondary); padding:0; margin-bottom:15px; font-weight:bold; cursor:pointer;">⬅ Retour</button>
             <h2>Fiche d'intervention</h2>
-            
             <div id="recap-cle" class="recap"></div>
-
             <label><b>Envoyer à quel technicien ?</b></label>
-            <select id="f-tech">
-                <option value="OLIVIER">OLIVIER</option>
-                <option value="FRANCK">FRANCK</option>
-            </select>
-
+            <select id="f-tech"><option value="OLIVIER">OLIVIER</option><option value="FRANCK">FRANCK</option></select>
             <label><b>Type de mission :</b></label>
-            <select id="f-mission">
-                <option value="DOUBLE DE CLÉ">Double de clé</option>
-                <option value="PERTE TOTALE">Perte totale</option>
-            </select>
-
+            <select id="f-mission"><option value="DOUBLE DE CLÉ">Double de clé</option><option value="PERTE TOTALE">Perte totale</option></select>
             <label><b>Nom du Client :</b></label>
             <input type="text" id="f-client" placeholder="Ex: M. Martin">
-
             <label><b>Immatriculation :</b></label>
             <input type="text" id="f-immat" placeholder="Ex: AB-123-CD">
-
             <label><b>Télephone du client :</b></label>
             <input type="text" id="f-Téléphone" placeholder="Ex: 06 01 02 03 04">
-
             <label><b>Notes (Adresse, détails...) :</b></label>
             <textarea id="f-notes" rows="3" placeholder="Informations supplémentaires..."></textarea>
-
             <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER PAR WHATSAPP</button>
         </div>
     </div>
@@ -102,7 +93,12 @@
             <input type="text" id="a-desc" placeholder="Modèle / Description">
             <input type="text" id="a-puce" placeholder="N° Puce">
             <input type="number" id="a-prix" placeholder="Prix (€)">
-            <input type="file" id="a-photo" accept="image/*">
+            
+            <div class="photo-group">
+                <input type="file" id="a-photo" accept="image/*">
+                <button type="button" id="upload_widget" class="btn-clou">📸 Appareil Photo</button>
+            </div>
+
             <button class="action-btn" onclick="ajouterCle()">ENREGISTRER</button>
         </div>
         <div class="card">
@@ -113,15 +109,29 @@
     </div>
 </div>
 
+<script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+
 <script>
     let catalogue = JSON.parse(localStorage.getItem('catalogue')) || [];
     let idChoisi = null;
+    let imageCloudinaryURL = null;
 
-    function accesAdmin() {
-        if (prompt("Code d'accès Admin :") === "1234") changerPage('admin');
-        else alert("Refusé.");
-    }
+    // --- CONFIG CLOUDINARY ---
+    var myWidget = cloudinary.createUploadWidget({
+        cloudName: 'dpxyoa6d5', 
+        uploadPreset: 'CATALOGUE'
+    }, (error, result) => { 
+        if (!error && result && result.event === "success") { 
+            imageCloudinaryURL = result.info.secure_url;
+            alert("Photo capturée !");
+        }
+    });
 
+    document.getElementById("upload_widget").addEventListener("click", function(){
+        myWidget.open();
+    }, false);
+
+    // --- FONCTIONS NAVIGATION ---
     function changerPage(nom) {
         document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
         document.getElementById('page-' + nom).classList.remove('hidden');
@@ -129,129 +139,150 @@
         if(nom === 'admin') initTableAdmin();
     }
 
-    // --- LOGIQUE SELECTION ---
+    function accesAdmin() {
+        if (prompt("Code d'accès Admin :") === "1234") changerPage('admin');
+        else alert("Refusé.");
+    }
+
+    // --- LOGIQUE CATALOGUE ---
+    function ajouterCle() {
+        const fileInput = document.getElementById('a-photo');
+        const file = fileInput.files[0];
+        
+        const nouvelleCle = {
+            id: Date.now(),
+            marque: document.getElementById('a-marque').value.toUpperCase(),
+            famille: document.getElementById('a-famille').value,
+            desc: document.getElementById('a-desc').value,
+            puce: document.getElementById('a-puce').value,
+            prix: document.getElementById('a-prix').value,
+            image: imageCloudinaryURL || "https://via.placeholder.com/150"
+        };
+
+        if(file && !imageCloudinaryURL) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                nouvelleCle.image = e.target.result;
+                catalogue.push(nouvelleCle);
+                sauvegarder();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            catalogue.push(nouvelleCle);
+            sauvegarder();
+        }
+    }
+
+    function sauvegarder() {
+        localStorage.setItem('catalogue', JSON.stringify(catalogue));
+        alert("Enregistré !");
+        location.reload();
+    }
+
+    // --- INITIALISATION CLIENT (FONCTIONS MANQUANTES REMISES ICI) ---
     function initMarques() {
         const sel = document.getElementById('u-marque');
         const marques = [...new Set(catalogue.map(c => c.marque))].sort();
-        sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + 
-                        marques.map(m => `<option value="${m}">${m}</option>`).join('');
+        sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + marques.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
     function majFamilles() {
-        const m = document.getElementById('u-marque').value;
+        const marque = document.getElementById('u-marque').value;
         const sel = document.getElementById('u-famille');
-        const familles = [...new Set(catalogue.filter(c => c.marque === m).map(c => c.famille))].sort();
-        sel.innerHTML = '<option value="">-- Type --</option>' + familles.map(f => `<option value="${f}">${f}</option>`).join('');
+        if(!marque) { sel.disabled = true; return; }
+        const familles = [...new Set(catalogue.filter(c => c.marque === marque).map(c => c.famille))];
+        sel.innerHTML = '<option value="">-- Choisir Type --</option>' + familles.map(f => `<option value="${f}">${f}</option>`).join('');
         sel.disabled = false;
-        resetCascade(['u-puce']);
     }
 
     function majPuces() {
-        const m = document.getElementById('u-marque').value;
-        const f = document.getElementById('u-famille').value;
+        const marque = document.getElementById('u-marque').value;
+        const famille = document.getElementById('u-famille').value;
         const sel = document.getElementById('u-puce');
-        const puces = [...new Set(catalogue.filter(c => c.marque === m && c.famille === f).map(c => c.puce))].sort();
-        sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
+        const puces = [...new Set(catalogue.filter(c => c.marque === marque && c.famille === famille).map(c => c.puce))];
+        sel.innerHTML = '<option value="">-- Choisir Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
         sel.disabled = false;
-        document.getElementById('u-grille-container').classList.add('hidden');
     }
 
     function majGrille() {
-        const m = document.getElementById('u-marque').value;
-        const f = document.getElementById('u-famille').value;
-        const p = document.getElementById('u-puce').value;
-        const grille = document.getElementById('grille-cles');
-        const cles = catalogue.filter(c => c.marque === m && c.famille === f && c.puce === p);
-        grille.innerHTML = cles.map(c => `<div class="key-item" onclick="select(this, ${c.id})"><img src="${c.photo}"><div><b>${c.desc}</b></div><div>${c.prix}€</div></div>`).join('');
+        const marque = document.getElementById('u-marque').value;
+        const famille = document.getElementById('u-famille').value;
+        const puce = document.getElementById('u-puce').value;
+        const liste = catalogue.filter(c => c.marque === marque && c.famille === famille && c.puce === puce);
+        const container = document.getElementById('grille-cles');
+        container.innerHTML = liste.map(c => `
+            <div class="key-item" onclick="selectionnerCle(${c.id}, this)">
+                <img src="${c.image}">
+                <p>${c.desc}<br><b>${c.prix}€</b></p>
+            </div>
+        `).join('');
         document.getElementById('u-grille-container').classList.remove('hidden');
     }
 
-    function select(el, id) {
+    function selectionnerCle(id, el) {
+        idChoisi = id;
         document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
         el.classList.add('selected');
-        idChoisi = id;
         document.getElementById('btn-valider').style.display = 'block';
     }
 
     function ouvrirFormulaire() {
-        const c = catalogue.find(x => x.id === idChoisi);
-        document.getElementById('recap-cle').innerHTML = `<strong>Modèle sélectionné :</strong> ${c.marque} ${c.desc}<br><strong>Puce :</strong> ${c.puce} | <strong>Prix :</strong> ${c.prix}€`;
+        const cle = catalogue.find(c => c.id === idChoisi);
+        document.getElementById('recap-cle').innerHTML = `
+            <table>
+                <tr><td><b>Véhicule:</b></td><td>${cle.marque} (${cle.famille})</td></tr>
+                <tr><td><b>Modèle:</b></td><td>${cle.desc}</td></tr>
+                <tr><td><b>Prix:</b></td><td>${cle.prix} €</td></tr>
+            </table>`;
         changerPage('formulaire');
     }
 
-    // --- ENVOI WHATSAPP ---
     function envoyerWhatsApp() {
-        const c = catalogue.find(x => x.id === idChoisi);
-        const client = document.getElementById('f-client').value;
-        const Téléphone = document.getElementById('f-Téléphone').value;
-        const immat = document.getElementById('f-immat').value;
+        const cle = catalogue.find(c => c.id === idChoisi);
         const tech = document.getElementById('f-tech').value;
-        const mission = document.getElementById('f-mission').value;
-        const notes = document.getElementById('f-notes').value || "Aucune";
+        const telTech = (tech === "OLIVIER") ? "33600000000" : "33611111111"; // Mets les vrais numéros ici
+        
+        const texte = `🚀 *NOUVELLE MISSION - ${tech}* \n\n` +
+                      `📍 *Mission:* ${document.getElementById('f-mission').value}\n` +
+                      `👤 *Client:* ${document.getElementById('f-client').value}\n` +
+                      `🚗 *Immat:* ${document.getElementById('f-immat').value}\n` +
+                      `📱 *Tel:* ${document.getElementById('f-Téléphone').value}\n\n` +
+                      `🔑 *Clé:* ${cle.marque} ${cle.desc}\n` +
+                      `💰 *Prix:* ${cle.prix}€\n` +
+                      `📝 *Notes:* ${document.getElementById('f-notes').value}\n\n` +
+                      `🖼 *Photo:* ${cle.image}`;
 
-        if(!client || !immat) return alert("Veuillez remplir au moins le Client et l'Immat.");
-
-        // CONFIGURATION DES NUMEROS (Mettre les vrais ici)
-        const numeros = {
-            "OLIVIER": "33600000000", // REMPLACE ICI
-            "FRANCK": "33600000000"  // REMPLACE ICI
-        };
-
-        const numDestinataire = numeros[tech];
-
-        // Formatage du message
-        const texte = encodeURIComponent(
-            `*🔑 EXPRESS MB - NOUVELLE MISSION*\n` +
-            `------------------------------------\n` +
-            `🛠 *MISSION :* ${mission}\n` +
-            `🚗 *VÉHICULE :* ${c.marque} (${c.famille})\n` +
-            `🔢 *IMMAT :* ${immat}\n` +
-            `👤 *CLIENT :* ${client}\n` +
-            `👤 *Téléphone :* ${Téléphone}\n` +
-            `📟 *PUCE :* ${c.puce}\n` +
-            `📦 *MODÈLE :* ${c.desc}\n` +
-            `💵 *TARIF :* ${c.prix}€\n` +
-            `📝 *NOTES :* ${notes}`
-        );
-
-        window.open(`https://wa.me/${numDestinataire}?text=${texte}`, '_blank');
-        location.reload(); // Reset après envoi
-    }
-
-    // --- ADMIN ---
-    function ajouterCle() {
-        const m = document.getElementById('a-marque').value.trim().toUpperCase();
-        const p = document.getElementById('a-prix').value;
-        const f = document.getElementById('a-photo').files[0];
-        if(!m || !p || !f) return alert("Champs obligatoires !");
-        const r = new FileReader();
-        r.onload = (e) => {
-            catalogue.push({ id: Date.now(), marque: m, famille: document.getElementById('a-famille').value, desc: document.getElementById('a-desc').value, puce: document.getElementById('a-puce').value, prix: p, photo: e.target.result });
-            localStorage.setItem('catalogue', JSON.stringify(catalogue));
-            location.reload();
-        };
-        r.readAsDataURL(f);
+        window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
     }
 
     function initTableAdmin() {
-        const d = document.getElementById('liste-admin');
-        d.innerHTML = "<table>" + catalogue.map(c => `<tr><td><img src="${c.photo}" class="img-mini"></td><td>${c.marque}</td><td><button onclick="suppr(${c.id})">❌</button></td></tr>`).join('') + "</table>";
+        const div = document.getElementById('liste-admin');
+        div.innerHTML = '<table>' + catalogue.map(c => `
+            <tr>
+                <td><img src="${c.image}" class="img-mini"></td>
+                <td>${c.marque}<br><small>${c.desc}</small></td>
+                <td><button onclick="supprimer(${c.id})" style="background:var(--danger); color:white;">X</button></td>
+            </tr>
+        `).join('') + '</table>';
     }
 
-    function suppr(id) {
-        if(confirm("Supprimer ?")) { catalogue = catalogue.filter(c => c.id !== id); localStorage.setItem('catalogue', JSON.stringify(catalogue)); initTableAdmin(); }
+    function supprimer(id) {
+        if(confirm("Supprimer ?")) {
+            catalogue = catalogue.filter(c => c.id !== id);
+            sauvegarder();
+        }
     }
 
     function resetTotal() {
-        if (confirm("Vider tout ?") && prompt("Tapez : EFFACER") === "EFFACER") { localStorage.clear(); location.reload(); }
+        if(confirm("ATTENTION : Cela effacera tout le catalogue. Confirmer ?")) {
+            localStorage.clear();
+            location.reload();
+        }
     }
 
-    function resetCascade(ids) {
-        ids.forEach(id => { document.getElementById(id).innerHTML = ""; document.getElementById(id).disabled = true; });
-        document.getElementById('u-grille-container').classList.add('hidden');
-    }
-
-    window.onload = initMarques;
+    // Lancer la page client au démarrage
+    changerPage('user');
 </script>
+
 </body>
 </html>
