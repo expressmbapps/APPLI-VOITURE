@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EXPRESS MB - WhatsApp Ready</title>
     <style>
         :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; }
@@ -28,10 +29,8 @@
         td { padding: 8px; border-bottom: 1px solid #eee; }
         .img-mini { width: 50px; height: 50px; object-fit: cover; }
 
-        /* ALIGNEMENT DES BOUTONS PHOTO */
-        .photo-group { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-        .photo-group input { margin: 0; flex: 1; }
-        .btn-clou { background: #2ecc71; color: white; padding: 10px; border-radius: 5px; font-size: 14px; white-space: nowrap; }
+        .photo-group { background: #f9f9f9; padding: 15px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; margin: 10px 0; }
+        #upload-status { font-weight: bold; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
@@ -64,26 +63,22 @@
             <button onclick="changerPage('user')" style="background:none; color:var(--secondary); padding:0; margin-bottom:15px; font-weight:bold; cursor:pointer;">⬅ Retour</button>
             <h2>Fiche d'intervention</h2>
             <div id="recap-cle" class="recap"></div>
-            <label><b>Envoyer à quel technicien ?</b></label>
+            <label><b>Technicien :</b></label>
             <select id="f-tech"><option value="OLIVIER">OLIVIER</option><option value="FRANCK">FRANCK</option></select>
-            <label><b>Type de mission :</b></label>
+            <label><b>Mission :</b></label>
             <select id="f-mission"><option value="DOUBLE DE CLÉ">Double de clé</option><option value="PERTE TOTALE">Perte totale</option></select>
-            <label><b>Nom du Client :</b></label>
-            <input type="text" id="f-client" placeholder="Ex: M. Martin">
-            <label><b>Immatriculation :</b></label>
-            <input type="text" id="f-immat" placeholder="Ex: AB-123-CD">
-            <label><b>Télephone du client :</b></label>
-            <input type="text" id="f-Téléphone" placeholder="Ex: 06 01 02 03 04">
-            <label><b>Notes (Adresse, détails...) :</b></label>
-            <textarea id="f-notes" rows="3" placeholder="Informations supplémentaires..."></textarea>
-            <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER PAR WHATSAPP</button>
+            <input type="text" id="f-client" placeholder="Nom du Client">
+            <input type="text" id="f-immat" placeholder="Immatriculation">
+            <input type="text" id="f-tel" placeholder="Téléphone client">
+            <textarea id="f-notes" rows="3" placeholder="Notes (Adresse...)"></textarea>
+            <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER WHATSAPP</button>
         </div>
     </div>
 
     <div id="page-admin" class="page hidden">
         <div class="card">
             <h2>Ajouter au Catalogue</h2>
-            <input type="text" id="a-marque" placeholder="MARQUE">
+            <input type="text" id="a-marque" placeholder="MARQUE (ex: RENAULT)">
             <select id="a-famille">
                 <option value="PLIP">PLIP</option>
                 <option value="MAIN LIBRE">MAIN LIBRE</option>
@@ -95,43 +90,62 @@
             <input type="number" id="a-prix" placeholder="Prix (€)">
             
             <div class="photo-group">
-                <input type="file" id="a-photo" accept="image/*">
-                <button type="button" id="upload_widget" class="btn-clou">📸 Appareil Photo</button>
+                <label style="display:block; margin-bottom:10px;"><b>📸 Prendre la photo :</b></label>
+                <input type="file" id="a-photo" accept="image/*" capture="environment" onchange="uploadDirectToCloudinary(this)">
+                <span id="upload-status">Attend la photo...</span>
             </div>
 
-            <button class="action-btn" onclick="ajouterCle()">ENREGISTRER</button>
+            <button class="action-btn" onclick="ajouterCle()">ENREGISTRER DANS LE CATALOGUE</button>
         </div>
+        
         <div class="card">
-            <h3>Catalogue</h3>
+            <h3>Liste du Catalogue</h3>
             <div id="liste-admin"></div>
             <button onclick="resetTotal()" style="color:#999; background:none; border:1px solid #ccc; margin-top:50px; padding:5px; font-size:10px; cursor:pointer">Réinitialisation totale</button>
         </div>
     </div>
 </div>
 
-<script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
-
 <script>
     let catalogue = JSON.parse(localStorage.getItem('catalogue')) || [];
     let idChoisi = null;
     let imageCloudinaryURL = null;
 
-    // --- CONFIG CLOUDINARY ---
-    var myWidget = cloudinary.createUploadWidget({
-        cloudName: 'dpxyoa6d5', 
-        uploadPreset: 'CATALOGUE'
-    }, (error, result) => { 
-        if (!error && result && result.event === "success") { 
-            imageCloudinaryURL = result.info.secure_url;
-            alert("Photo capturée !");
-        }
-    });
+    // --- FONCTION CLOUDINARY DIRECTE ---
+    function uploadDirectToCloudinary(input) {
+        const file = input.files[0];
+        if (!file) return;
 
-    document.getElementById("upload_widget").addEventListener("click", function(){
-        myWidget.open();
-    }, false);
+        const statusText = document.getElementById('upload-status');
+        statusText.innerText = "⏳ Envoi vers le serveur...";
+        statusText.style.color = "orange";
 
-    // --- FONCTIONS NAVIGATION ---
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'CATALOGUE'); 
+
+        fetch('https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.secure_url) {
+                imageCloudinaryURL = data.secure_url;
+                statusText.innerText = "✅ Photo prête !";
+                statusText.style.color = "green";
+            } else {
+                alert("Erreur Cloudinary : " + (data.error ? data.error.message : "Inconnue"));
+                statusText.innerText = "❌ Erreur";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erreur réseau lors de l'envoi.");
+        });
+    }
+
+    // --- NAVIGATION ---
     function changerPage(nom) {
         document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
         document.getElementById('page-' + nom).classList.remove('hidden');
@@ -144,42 +158,31 @@
         else alert("Refusé.");
     }
 
-    // --- LOGIQUE CATALOGUE ---
+    // --- LOGIQUE ADMIN ---
     function ajouterCle() {
-        const fileInput = document.getElementById('a-photo');
-        const file = fileInput.files[0];
-        
+        const marque = document.getElementById('a-marque').value.toUpperCase();
+        if(!marque || !imageCloudinaryURL) {
+            alert("Merci de remplir la marque et de prendre une photo !");
+            return;
+        }
+
         const nouvelleCle = {
             id: Date.now(),
-            marque: document.getElementById('a-marque').value.toUpperCase(),
+            marque: marque,
             famille: document.getElementById('a-famille').value,
             desc: document.getElementById('a-desc').value,
             puce: document.getElementById('a-puce').value,
             prix: document.getElementById('a-prix').value,
-            image: imageCloudinaryURL || "https://via.placeholder.com/150"
+            image: imageCloudinaryURL
         };
 
-        if(file && !imageCloudinaryURL) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                nouvelleCle.image = e.target.result;
-                catalogue.push(nouvelleCle);
-                sauvegarder();
-            };
-            reader.readAsDataURL(file);
-        } else {
-            catalogue.push(nouvelleCle);
-            sauvegarder();
-        }
-    }
-
-    function sauvegarder() {
+        catalogue.push(nouvelleCle);
         localStorage.setItem('catalogue', JSON.stringify(catalogue));
-        alert("Enregistré !");
+        alert("Clé ajoutée au catalogue !");
         location.reload();
     }
 
-    // --- INITIALISATION CLIENT (FONCTIONS MANQUANTES REMISES ICI) ---
+    // --- LOGIQUE CLIENT ---
     function initMarques() {
         const sel = document.getElementById('u-marque');
         const marques = [...new Set(catalogue.map(c => c.marque))].sort();
@@ -230,7 +233,8 @@
         const cle = catalogue.find(c => c.id === idChoisi);
         document.getElementById('recap-cle').innerHTML = `
             <table>
-                <tr><td><b>Véhicule:</b></td><td>${cle.marque} (${cle.famille})</td></tr>
+                <tr><td><b>Véhicule:</b></td><td>${cle.marque}</td></tr>
+                <tr><td><b>Type:</b></td><td>${cle.famille}</td></tr>
                 <tr><td><b>Modèle:</b></td><td>${cle.desc}</td></tr>
                 <tr><td><b>Prix:</b></td><td>${cle.prix} €</td></tr>
             </table>`;
@@ -240,13 +244,13 @@
     function envoyerWhatsApp() {
         const cle = catalogue.find(c => c.id === idChoisi);
         const tech = document.getElementById('f-tech').value;
-        const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460"; // Mets les vrais numéros ici
+        const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
         
-        const texte = `🚀 *NOUVELLE MISSION - ${tech}* \n\n` +
-                      `📍 *Mission:* ${document.getElementById('f-mission').value}\n` +
+        const texte = `🚀 *MISSION - ${tech}* \n\n` +
+                      `📍 *Type:* ${document.getElementById('f-mission').value}\n` +
                       `👤 *Client:* ${document.getElementById('f-client').value}\n` +
                       `🚗 *Immat:* ${document.getElementById('f-immat').value}\n` +
-                      `📱 *Tel:* ${document.getElementById('f-Téléphone').value}\n\n` +
+                      `📱 *Tel:* ${document.getElementById('f-tel').value}\n\n` +
                       `🔑 *Clé:* ${cle.marque} ${cle.desc}\n` +
                       `💰 *Prix:* ${cle.prix}€\n` +
                       `📝 *Notes:* ${document.getElementById('f-notes').value}\n\n` +
@@ -267,20 +271,20 @@
     }
 
     function supprimer(id) {
-        if(confirm("Supprimer ?")) {
+        if(confirm("Supprimer cet article ?")) {
             catalogue = catalogue.filter(c => c.id !== id);
-            sauvegarder();
+            localStorage.setItem('catalogue', JSON.stringify(catalogue));
+            initTableAdmin();
         }
     }
 
     function resetTotal() {
-        if(confirm("ATTENTION : Cela effacera tout le catalogue. Confirmer ?")) {
+        if(confirm("Vider tout le catalogue ?")) {
             localStorage.clear();
             location.reload();
         }
     }
 
-    // Lancer la page client au démarrage
     changerPage('user');
 </script>
 
