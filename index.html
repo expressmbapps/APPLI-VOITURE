@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EXPRESS MB - WhatsApp Ready</title>
+    <title>EXPRESS MB - Catalogue Cloud</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; }
-        body { font-family: sans-serif; background: var(--light); margin: 0; }
+        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; --akl: #e67e22; }
+        body { font-family: sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
         header { background: var(--primary); color: white; padding: 15px; text-align: center; }
-        nav { display: flex; justify-content: center; background: #ddd; padding: 10px; gap: 10px; }
+        nav { display: flex; justify-content: center; background: #ddd; padding: 10px; gap: 10px; sticky: top; }
         button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
         .btn-blue { background: var(--secondary); color: white; }
         .btn-grey { background: #7f8c8d; color: white; }
@@ -19,18 +19,18 @@
         .action-btn { width: 100%; background: var(--success); color: white; padding: 15px; font-size: 18px; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer; }
         .btn-whatsapp { background: var(--whatsapp); color: white; }
         
-        .key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
-        .key-item { border: 2px solid #eee; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; background: white; transition: 0.2s; }
+        /* Grille des clés */
+        .key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
+        .key-item { border: 2px solid #eee; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; background: white; position: relative; }
         .key-item.selected { border-color: var(--success); background: #e8f8f0; transform: scale(1.02); }
-        .key-item img { width: 100%; height: 120px; object-fit: contain; }
+        .key-item img { width: 100%; height: 110px; object-fit: contain; }
+        .badge-akl { position: absolute; top: 5px; right: 5px; background: var(--akl); color: white; font-size: 9px; padding: 2px 5px; border-radius: 3px; }
         
-        .recap { background: #eef2f7; padding: 15px; border-left: 5px solid var(--secondary); margin-bottom: 20px; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; }
+        .recap { background: #eef2f7; padding: 15px; border-left: 5px solid var(--secondary); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
-        .img-mini { width: 50px; height: 50px; object-fit: cover; }
-
-        .photo-group { background: #f9f9f9; padding: 15px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; margin: 10px 0; }
-        #upload-status { font-weight: bold; margin-top: 10px; display: block; }
+        .img-mini { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        #loader { text-align: center; padding: 50px; font-size: 1.2em; color: var(--secondary); }
     </style>
 </head>
 <body>
@@ -38,20 +38,21 @@
 <header><h1>🔑 EXPRESS MB</h1></header>
 
 <nav>
-    <button class="btn-blue" onclick="changerPage('user')">📱 CLIENT</button>
+    <button class="btn-blue" onclick="changerPage('user')">📱 INTERVENTION</button>
     <button class="btn-grey" onclick="accesAdmin()">⚙️ ADMIN</button>
 </nav>
 
 <div class="container">
-    <div id="page-user" class="page">
+    <div id="loader">⏳ Chargement du catalogue Google...</div>
+
+    <div id="page-user" class="page hidden">
         <div class="card">
-            <h2>Sélectionner la clé</h2>
-            <select id="u-marque" onchange="majFamilles()"><option value="">-- Charger le catalogue --</option></select>
-            <select id="u-famille" onchange="majPuces()" disabled></select>
-            <select id="u-puce" onchange="majGrille()" disabled></select>
+            <h2>Trouver une clé</h2>
+            <select id="u-marque" onchange="majFamilles()"><option value="">-- Choisir Marque --</option></select>
+            <select id="u-type-cle" onchange="majPuces()" disabled><option value="">-- Type de clé --</option></select>
+            <select id="u-type-puce" onchange="majGrille()" disabled><option value="">-- Type de puce --</option></select>
 
             <div id="u-grille-container" class="hidden">
-                <p><b>4. Sélectionnez le modèle visuel :</b></p>
                 <div id="grille-cles" class="key-grid"></div>
                 <button class="action-btn" id="btn-valider" onclick="ouvrirFormulaire()" style="display:none">Démarrer l'intervention</button>
             </div>
@@ -60,18 +61,19 @@
 
     <div id="page-formulaire" class="page hidden">
         <div class="card">
-            <button onclick="changerPage('user')" style="background:none; color:var(--secondary); padding:0; margin-bottom:15px; font-weight:bold; cursor:pointer;">⬅ Retour</button>
+            <button onclick="changerPage('user')" style="background:none; color:var(--secondary); font-weight:bold; cursor:pointer;">⬅ Retour</button>
             <h2>Fiche d'intervention</h2>
             <div id="recap-cle" class="recap"></div>
-            <label><b>Technicien :</b></label>
-            <select id="f-tech"><option value="OLIVIER">OLIVIER</option><option value="FRANCK">FRANCK</option></select>
-            <label><b>Mission :</b></label>
-            <select id="f-mission"><option value="DOUBLE DE CLÉ">Double de clé</option><option value="PERTE TOTALE">Perte totale</option></select>
+            
+            <select id="f-tech"><option value="OLIVIER">Technicien: OLIVIER</option><option value="FRANCK">Technicien: FRANCK</option></select>
+            <select id="f-mission" onchange="majPrixRecap()"><option value="DOUBLE DE CLÉ">Double de clé</option><option value="PERTE TOTALE">Perte totale (AKL)</option></select>
+            
             <input type="text" id="f-client" placeholder="Nom du Client">
             <input type="text" id="f-immat" placeholder="Immatriculation">
             <input type="text" id="f-tel" placeholder="Téléphone client">
-            <textarea id="f-notes" rows="3" placeholder="Notes (Adresse...)"></textarea>
-            <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER WHATSAPP</button>
+            <textarea id="f-notes" rows="3" placeholder="Notes complémentaires..."></textarea>
+            
+            <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER AU TECH</button>
         </div>
     </div>
 
@@ -79,108 +81,54 @@
         <div class="card">
             <h2>Ajouter au Catalogue</h2>
             <input type="text" id="a-marque" placeholder="MARQUE (ex: RENAULT)">
-            <select id="a-famille">
-                <option value="PLIP">PLIP</option>
-                <option value="MAIN LIBRE">MAIN LIBRE</option>
-                <option value="CARTE">CARTE</option>
-                <option value="NON PLIABLE">NON PLIABLE</option>
-            </select>
-            <input type="text" id="a-desc" placeholder="Modèle / Description">
-            <input type="text" id="a-puce" placeholder="N° Puce">
-            <input type="number" id="a-prix" placeholder="Prix (€)">
-            
-            <div class="photo-group">
-                <label style="display:block; margin-bottom:10px;"><b>📸 Prendre la photo :</b></label>
-                <input type="file" id="a-photo" accept="image/*" onchange="uploadDirectToCloudinary(this)">
-                <span id="upload-status">Attend la photo...</span>
-            </div>
+            <input type="text" id="a-type-cle" placeholder="Type (ex: CARTE, PLIP...)">
+            <input type="text" id="a-puce" placeholder="N° Puce (ex: ID46)">
+            <input type="number" id="a-prix" placeholder="Prix Standard (€)">
+            <input type="number" id="a-prix-akl" placeholder="Prix AKL (€)">
+            <textarea id="a-comm" placeholder="Commentaire technique"></textarea>
 
-            <button class="action-btn" onclick="ajouterCle()">ENREGISTRER DANS LE CATALOGUE</button>
+            <div style="background:#f9f9f9; padding:15px; border:2px dashed #ccc; text-align:center;">
+                <input type="file" id="a-photo" accept="image/*" onchange="uploadPhoto(this)">
+                <p id="upload-status">📸 Photo requise</p>
+            </div>
+            <button class="action-btn" id="btn-save" onclick="ajouterCleGoogle()">ENREGISTRER DANS GOOGLE</button>
         </div>
-        
+
         <div class="card">
-            <h3>Liste du Catalogue</h3>
+            <h3>Gestion du Stock</h3>
             <div id="liste-admin"></div>
-            <button onclick="resetTotal()" style="color:#999; background:none; border:1px solid #ccc; margin-top:50px; padding:5px; font-size:10px; cursor:pointer">Réinitialisation totale</button>
         </div>
     </div>
 </div>
 
 <script>
-    let catalogue = JSON.parse(localStorage.getItem('catalogue')) || [];
+    // --- CONFIGURATION ---
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbwDoj2moiCHePrIeOtBeAOCvIAuz5_sPA3ImZKYZNsbHqpewImdMaeAPNWsj62gIUbY/exec"; 
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
+    const UPLOAD_PRESET = "CATALOGUE"; 
+
+    let catalogue = [];
     let idChoisi = null;
-    let imageCloudinaryURL = null;
+    let tempPhotoURL = null;
 
-    // --- FONCTION CLOUDINARY DIRECTE ---
-    function uploadDirectToCloudinary(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const statusText = document.getElementById('upload-status');
-        statusText.innerText = "⏳ Envoi vers le serveur...";
-        statusText.style.color = "orange";
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', 'CATALOGUE'); 
-
-        fetch('https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.secure_url) {
-                imageCloudinaryURL = data.secure_url;
-                statusText.innerText = "✅ Photo prête !";
-                statusText.style.color = "green";
-            } else {
-                alert("Erreur Cloudinary : " + (data.error ? data.error.message : "Inconnue"));
-                statusText.innerText = "❌ Erreur";
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Erreur réseau lors de l'envoi.");
-        });
+    // --- CHARGEMENT ---
+    async function chargerDonnees() {
+        try {
+            const response = await fetch(SHEET_URL);
+            catalogue = await response.json();
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('page-user').classList.remove('hidden');
+            initMarques();
+        } catch (e) { document.getElementById('loader').innerText = "❌ Erreur de chargement"; }
     }
 
     // --- NAVIGATION ---
-    function changerPage(nom) {
+    function changerPage(n) {
         document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-        document.getElementById('page-' + nom).classList.remove('hidden');
-        if(nom === 'user') initMarques();
-        if(nom === 'admin') initTableAdmin();
+        document.getElementById('page-'+n).classList.remove('hidden');
+        if(n === 'admin') initTableAdmin();
     }
-
-    function accesAdmin() {
-        if (prompt("Code d'accès Admin :") === "1234") changerPage('admin');
-        else alert("Refusé.");
-    }
-
-    // --- LOGIQUE ADMIN ---
-    function ajouterCle() {
-        const marque = document.getElementById('a-marque').value.toUpperCase();
-        if(!marque || !imageCloudinaryURL) {
-            alert("Merci de remplir la marque et de prendre une photo !");
-            return;
-        }
-
-        const nouvelleCle = {
-            id: Date.now(),
-            marque: marque,
-            famille: document.getElementById('a-famille').value,
-            desc: document.getElementById('a-desc').value,
-            puce: document.getElementById('a-puce').value,
-            prix: document.getElementById('a-prix').value,
-            image: imageCloudinaryURL
-        };
-
-        catalogue.push(nouvelleCle);
-        localStorage.setItem('catalogue', JSON.stringify(catalogue));
-        alert("Clé ajoutée au catalogue !");
-        location.reload();
-    }
+    function accesAdmin() { if(prompt("Code:") === "1234") changerPage('admin'); }
 
     // --- LOGIQUE CLIENT ---
     function initMarques() {
@@ -188,40 +136,32 @@
         const marques = [...new Set(catalogue.map(c => c.marque))].sort();
         sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + marques.map(m => `<option value="${m}">${m}</option>`).join('');
     }
-
     function majFamilles() {
-        const marque = document.getElementById('u-marque').value;
-        const sel = document.getElementById('u-famille');
-        if(!marque) { sel.disabled = true; return; }
-        const familles = [...new Set(catalogue.filter(c => c.marque === marque).map(c => c.famille))];
-        sel.innerHTML = '<option value="">-- Choisir Type --</option>' + familles.map(f => `<option value="${f}">${f}</option>`).join('');
+        const m = document.getElementById('u-marque').value;
+        const sel = document.getElementById('u-type-cle');
+        const types = [...new Set(catalogue.filter(c => c.marque === m).map(c => c.type_cle))];
+        sel.innerHTML = '<option value="">-- Type --</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
         sel.disabled = false;
     }
-
     function majPuces() {
-        const marque = document.getElementById('u-marque').value;
-        const famille = document.getElementById('u-famille').value;
-        const sel = document.getElementById('u-puce');
-        const puces = [...new Set(catalogue.filter(c => c.marque === marque && c.famille === famille).map(c => c.puce))];
-        sel.innerHTML = '<option value="">-- Choisir Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
+        const m = document.getElementById('u-marque').value;
+        const t = document.getElementById('u-type-cle').value;
+        const sel = document.getElementById('u-type-puce');
+        const puces = [...new Set(catalogue.filter(c => c.marque === m && c.type_cle === t).map(c => c.type_puce))];
+        sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
         sel.disabled = false;
     }
-
     function majGrille() {
-        const marque = document.getElementById('u-marque').value;
-        const famille = document.getElementById('u-famille').value;
-        const puce = document.getElementById('u-puce').value;
-        const liste = catalogue.filter(c => c.marque === marque && c.famille === famille && c.puce === puce);
-        const container = document.getElementById('grille-cles');
-        container.innerHTML = liste.map(c => `
-            <div class="key-item" onclick="selectionnerCle(${c.id}, this)">
-                <img src="${c.image}">
-                <p>${c.desc}<br><b>${c.prix}€</b></p>
-            </div>
-        `).join('');
+        const m = document.getElementById('u-marque').value, t = document.getElementById('u-type-cle').value, p = document.getElementById('u-type-puce').value;
+        const liste = catalogue.filter(c => c.marque === m && c.type_cle === t && c.type_puce === p);
+        document.getElementById('grille-cles').innerHTML = liste.map(c => `
+            <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                ${c.prix_akl ? '<span class="badge-akl">AKL</span>' : ''}
+                <img src="${c.image || ''}">
+                <p><b>${c.prix}€</b></p>
+            </div>`).join('');
         document.getElementById('u-grille-container').classList.remove('hidden');
     }
-
     function selectionnerCle(id, el) {
         idChoisi = id;
         document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
@@ -229,64 +169,66 @@
         document.getElementById('btn-valider').style.display = 'block';
     }
 
-    function ouvrirFormulaire() {
-        const cle = catalogue.find(c => c.id === idChoisi);
-        document.getElementById('recap-cle').innerHTML = `
-            <table>
-                <tr><td><b>Véhicule:</b></td><td>${cle.marque}</td></tr>
-                <tr><td><b>Type:</b></td><td>${cle.famille}</td></tr>
-                <tr><td><b>Modèle:</b></td><td>${cle.desc}</td></tr>
-                <tr><td><b>Prix:</b></td><td>${cle.prix} €</td></tr>
-            </table>`;
-        changerPage('formulaire');
+    // --- WHATSAPP ---
+    function majPrixRecap() {
+        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
+        const prix = document.getElementById('f-mission').value === "PERTE TOTALE" ? cle.prix_akl : cle.prix;
+        document.getElementById('recap-cle').innerHTML = `<b>${cle.marque}</b> - ${cle.type_cle}<br>Puce: ${cle.type_puce}<br>Prix: ${prix}€`;
+    }
+    function ouvrirFormulaire() { majPrixRecap(); changerPage('formulaire'); }
+    function envoyerWhatsApp() {
+        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
+        const mission = document.getElementById('f-mission').value;
+        const prix = mission === "PERTE TOTALE" ? cle.prix_akl : cle.prix;
+        const tech = document.getElementById('f-tech').value;
+        const tel = (tech === "OLIVIER") ? "33749504047" : "33666824460";
+        const texte = `🚀 *MISSION - ${tech}*\n📍 *Type:* ${mission}\n👤 *Client:* ${document.getElementById('f-client').value}\n🚗 *Immat:* ${document.getElementById('f-immat').value}\n🔑 *Clé:* ${cle.marque}\n💰 *Prix:* ${prix}€\n🖼 *Photo:* ${cle.image}`;
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texte)}`, '_blank');
     }
 
-    function envoyerWhatsApp() {
-        const cle = catalogue.find(c => c.id === idChoisi);
-        const tech = document.getElementById('f-tech').value;
-        const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
-        
-        const texte = `🚀 *MISSION - ${tech}* \n\n` +
-                      `📍 *Type:* ${document.getElementById('f-mission').value}\n` +
-                      `👤 *Client:* ${document.getElementById('f-client').value}\n` +
-                      `🚗 *Immat:* ${document.getElementById('f-immat').value}\n` +
-                      `📱 *Tel:* ${document.getElementById('f-tel').value}\n\n` +
-                      `🔑 *Clé:* ${cle.marque} ${cle.desc}\n` +
-                      `💰 *Prix:* ${cle.prix}€\n` +
-                      `📝 *Notes:* ${document.getElementById('f-notes').value}\n\n` +
-                      `🖼 *Photo:* ${cle.image}`;
+    // --- ADMIN (CLOUD) ---
+    async function uploadPhoto(input) {
+        const file = input.files[0]; if(!file) return;
+        document.getElementById('upload-status').innerText = "⏳ Envoi...";
+        const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', UPLOAD_PRESET);
+        const res = await fetch(CLOUDINARY_URL, { method:'POST', body:fd }).then(r => r.json());
+        tempPhotoURL = res.secure_url;
+        document.getElementById('upload-status').innerText = "✅ OK";
+    }
 
-        window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
+    async function ajouterCleGoogle() {
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        const data = {
+            id: "ID-"+Date.now(),
+            marque: document.getElementById('a-marque').value.toUpperCase(),
+            type_cle: document.getElementById('a-type-cle').value,
+            type_puce: document.getElementById('a-puce').value,
+            prix: document.getElementById('a-prix').value,
+            prix_akl: document.getElementById('a-prix-akl').value,
+            commentaire: document.getElementById('a-comm').value,
+            image: tempPhotoURL
+        };
+        await fetch(SHEET_URL, { method:'POST', mode:'no-cors', body: JSON.stringify(data)});
+        alert("Ajouté !"); location.reload();
+    }
+
+    async function supprimer(id) {
+        if(!confirm("Supprimer ?")) return;
+        await fetch(SHEET_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({action:"delete", id:id})});
+        location.reload();
     }
 
     function initTableAdmin() {
-        const div = document.getElementById('liste-admin');
-        div.innerHTML = '<table>' + catalogue.map(c => `
+        document.getElementById('liste-admin').innerHTML = '<table>' + catalogue.map(c => `
             <tr>
                 <td><img src="${c.image}" class="img-mini"></td>
-                <td>${c.marque}<br><small>${c.desc}</small></td>
-                <td><button onclick="supprimer(${c.id})" style="background:var(--danger); color:white;">X</button></td>
-            </tr>
-        `).join('') + '</table>';
+                <td>${c.marque}</td>
+                <td><button onclick="supprimer('${c.id}')" style="background:var(--danger); color:white;">X</button></td>
+            </tr>`).join('') + '</table>';
     }
 
-    function supprimer(id) {
-        if(confirm("Supprimer cet article ?")) {
-            catalogue = catalogue.filter(c => c.id !== id);
-            localStorage.setItem('catalogue', JSON.stringify(catalogue));
-            initTableAdmin();
-        }
-    }
-
-    function resetTotal() {
-        if(confirm("Vider tout le catalogue ?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
-
-    changerPage('user');
+    window.onload = chargerDonnees;
 </script>
-
 </body>
 </html>
