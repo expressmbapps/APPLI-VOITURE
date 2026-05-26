@@ -103,7 +103,7 @@
 
 <script>
     // --- CONFIGURATION ---
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxKzo4pyjynNkyjWu-xJZBtYe5U1JAMZU55SU55Uy8ZYZ0JTR5UHQ-1csloRX_0j-X4/exec"; 
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbzCkzO81nRjV2Mc-6wOy1k-JMGwmH2LYABlIQY91HsvoqvQNHlfsk28LaxuFrEs_VMI/exec"; 
     const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
     const UPLOAD_PRESET = "CATALOGUE"; 
 
@@ -132,10 +132,16 @@
 
     // --- LOGIQUE CLIENT ---
     function initMarques() {
-        const sel = document.getElementById('u-marque');
-        const marques = [...new Set(catalogue.map(c => c.marque))].sort();
-        sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + marques.map(m => `<option value="${m}">${m}</option>`).join('');
-    }
+    const sel = document.getElementById('u-marque');
+    
+    // 1. On récupère toutes les marques
+    // 2. .map(m => m.trim().toUpperCase()) : Enlève les espaces et met tout en majuscules
+    // 3. [...new Set(...)] : Supprime les doublons
+    const marques = [...new Set(catalogue.map(c => c.marque.trim().toUpperCase()))].sort();
+    
+    sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + 
+                    marques.map(m => `<option value="${m}">${m}</option>`).join('');
+}
     function majFamilles() {
         const m = document.getElementById('u-marque').value;
         const sel = document.getElementById('u-type-cle');
