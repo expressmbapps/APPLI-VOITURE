@@ -3,35 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EXPRESS MB - Catalogue Cloud</title>
+    <title>EXPRESS MB - Catalogue</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; --akl: #e67e22; }
+        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --akl: #e67e22; }
         body { font-family: sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
         header { background: var(--primary); color: white; padding: 15px; text-align: center; }
         nav { display: flex; justify-content: center; background: #ddd; padding: 10px; gap: 10px; position: sticky; top: 0; z-index: 100; }
-        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
-        .btn-blue { background: var(--secondary); color: white; }
-        .btn-grey { background: #7f8c8d; color: white; }
         .container { padding: 20px; max-width: 800px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .hidden { display: none !important; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
-        .action-btn { width: 100%; background: var(--success); color: white; padding: 15px; font-size: 18px; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer; }
-        .btn-whatsapp { background: var(--whatsapp); color: white; }
-        
-        /* Grille des clés améliorée */
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+        .action-btn { width: 100%; background: var(--success); color: white; padding: 15px; font-size: 18px; margin-top: 10px; }
         .key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
-        .key-item { border: 2px solid #eee; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; background: white; position: relative; transition: 0.2s; }
-        .key-item:hover { border-color: var(--secondary); }
-        .key-item.selected { border-color: var(--success); background: #e8f8f0; transform: scale(1.02); }
-        .key-item img { width: 100%; height: 110px; object-fit: contain; margin-bottom: 5px; }
-        .price-tag { font-size: 0.85em; margin: 2px 0; }
-        
-        .recap { background: #eef2f7; padding: 15px; border-left: 5px solid var(--secondary); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .key-item { border: 2px solid #eee; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; background: white; }
+        .key-item.selected { border-color: var(--success); background: #e8f8f0; }
+        .key-item img { width: 100%; height: 110px; object-fit: contain; }
+        .img-mini { width: 50px; height: 50px; object-fit: cover; }
+        table { width: 100%; border-collapse: collapse; }
         td { padding: 10px; border-bottom: 1px solid #eee; }
-        .img-mini { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
-        #loader { text-align: center; padding: 50px; font-size: 1.2em; color: var(--secondary); }
     </style>
 </head>
 <body>
@@ -39,12 +29,12 @@
 <header><h1>🔑 EXPRESS MB</h1></header>
 
 <nav>
-    <button class="btn-blue" onclick="changerPage('user')">📱 INTERVENTION</button>
-    <button class="btn-grey" onclick="accesAdmin()">⚙️ ADMIN</button>
+    <button style="background:var(--secondary); color:white;" onclick="changerPage('user')">📱 INTERVENTION</button>
+    <button style="background:#7f8c8d; color:white;" onclick="accesAdmin()">⚙️ ADMIN</button>
 </nav>
 
 <div class="container">
-    <div id="loader">⏳ Chargement du catalogue Google...</div>
+    <div id="loader">⏳ Chargement...</div>
 
     <div id="page-user" class="page hidden">
         <div class="card">
@@ -60,234 +50,146 @@
         </div>
     </div>
 
-    <div id="page-formulaire" class="page hidden">
-        <div class="card">
-            <button onclick="changerPage('user')" style="background:none; color:var(--secondary); font-weight:bold; cursor:pointer; border:none;">⬅ Retour</button>
-            <h2>Fiche d'intervention</h2>
-            <div id="recap-cle" class="recap"></div>
-            
-            <select id="f-tech">
-                <option value="OLIVIER">Technicien: OLIVIER</option>
-                <option value="FRANCK">Technicien: FRANCK</option>
-            </select>
-            <select id="f-mission" onchange="majPrixRecap()">
-                <option value="DOUBLE DE CLÉ">Double de clé</option>
-                <option value="PERTE TOTALE">Perte totale (AKL)</option>
-            </select>
-            
-            <input type="text" id="f-client" placeholder="Nom du Client">
-            <input type="text" id="f-immat" placeholder="Immatriculation">
-            <input type="text" id="f-tel" placeholder="Téléphone client">
-            <textarea id="f-notes" rows="3" placeholder="Notes complémentaires..."></textarea>
-            
-            <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER AU TECH</button>
-        </div>
-    </div>
-
     <div id="page-admin" class="page hidden">
         <div class="card">
-            <h2 id="admin-form-title">Ajouter au Catalogue</h2>
+            <h2 id="admin-title">Ajouter une clé</h2>
             <input type="hidden" id="a-id">
-            <input type="text" id="a-marque" placeholder="MARQUE (ex: RENAULT)">
-            <input type="text" id="a-type-cle" placeholder="Type (ex: CARTE, PLIP...)">
-            <input type="text" id="a-puce" placeholder="N° Puce (ex: ID46)">
+            <input type="text" id="a-marque" placeholder="MARQUE">
+            <input type="text" id="a-type-cle" placeholder="Type (CARTE, PLIP...)">
+            <input type="text" id="a-puce" placeholder="Puce (ID46...)">
             <input type="number" id="a-prix" placeholder="Prix Double (€)">
             <input type="number" id="a-prix-akl" placeholder="Prix AKL (€)">
-            <textarea id="a-comm" placeholder="Commentaire technique"></textarea>
-
-            <div style="background:#f9f9f9; padding:15px; border:2px dashed #ccc; text-align:center;">
-                <input type="file" id="a-photo" accept="image/*" onchange="uploadPhoto(this)">
-                <p id="upload-status">📸 Photo (optionnelle si modif)</p>
-            </div>
-            
-            <button class="action-btn" id="btn-save" onclick="ajouterCleGoogle()">ENREGISTRER</button>
-            <button class="action-btn btn-grey hidden" id="btn-cancel-edit" onclick="resetAdminForm()">ANNULER LA MODIFICATION</button>
+            <textarea id="a-comm" placeholder="Notes"></textarea>
+            <input type="file" onchange="uploadPhoto(this)">
+            <p id="up-status">📸 Photo requise</p>
+            <button class="action-btn" id="btn-save" onclick="saveCle()">ENREGISTRER</button>
+            <button onclick="resetAdminForm()" class="hidden" id="btn-cancel" style="width:100%; margin-top:5px;">Annuler</button>
         </div>
-
-        <div class="card">
-            <h3>Gestion du Stock / Edition</h3>
-            <div id="liste-admin"></div>
-        </div>
+        <div class="card"><div id="liste-admin"></div></div>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION (METS TES URL ICI) ---
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxZGdihSRDaAkHM4hSWKWubhPkkVloL_FeyZcXW2ryPIbfxlGc-BIKUjU9OgbtJ7XIk/exec"; 
-    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
-    const UPLOAD_PRESET = "CATALOGUE"; 
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxZGdihSRDaAkHM4hSWKWubhPkkVloL_FeyZcXW2ryPIbfxlGc-BIKUjU9OgbtJ7XIk/exec"; // <--- METS TON URL ICI
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload"; // <--- ET ICI
+    const PRESET = "CATALOGUE";
 
     let catalogue = [];
     let idChoisi = null;
-    let tempPhotoURL = null;
+    let tempURL = null;
 
-    // --- CHARGEMENT ---
     async function chargerDonnees() {
-        try {
-            const response = await fetch(SHEET_URL);
-            catalogue = await response.json();
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('page-user').classList.remove('hidden');
-            initMarques();
-        } catch (e) { document.getElementById('loader').innerText = "❌ Erreur de chargement"; }
+        const res = await fetch(SHEET_URL);
+        catalogue = await res.json();
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('page-user').classList.remove('hidden');
+        const sel = document.getElementById('u-marque');
+        const marques = [...new Set(catalogue.map(c => c.marque))].sort();
+        sel.innerHTML = '<option value="">-- Marque --</option>' + marques.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
-    // --- NAVIGATION ---
-    function changerPage(n) {
-        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-        document.getElementById('page-'+n).classList.remove('hidden');
-        if(n === 'admin') initTableAdmin();
+    function changerPage(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.add('hidden'));
+        document.getElementById('page-'+p).classList.remove('hidden');
+        if(p === 'admin') initAdmin();
     }
+
     function accesAdmin() { if(prompt("Code:") === "1234") changerPage('admin'); }
 
-    // --- LOGIQUE CLIENT ---
-    function initMarques() {
-        const sel = document.getElementById('u-marque');
-        const marques = [...new Set(catalogue.map(c => c.marque.trim().toUpperCase()))].sort();
-        sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + 
-                        marques.map(m => `<option value="${m}">${m}</option>`).join('');
-    }
-
+    // FILTRES INTERVENTION
     function majFamilles() {
         const m = document.getElementById('u-marque').value;
-        const sel = document.getElementById('u-type-cle');
         const types = [...new Set(catalogue.filter(c => c.marque === m).map(c => c.type_cle))];
+        const sel = document.getElementById('u-type-cle');
         sel.innerHTML = '<option value="">-- Type --</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
         sel.disabled = false;
+        document.getElementById('u-type-puce').disabled = true;
     }
 
     function majPuces() {
         const m = document.getElementById('u-marque').value;
         const t = document.getElementById('u-type-cle').value;
-        const sel = document.getElementById('u-type-puce');
         const puces = [...new Set(catalogue.filter(c => c.marque === m && c.type_cle === t).map(c => c.type_puce))];
+        const sel = document.getElementById('u-type-puce');
         sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
         sel.disabled = false;
     }
 
     function majGrille() {
-        const m = document.getElementById('u-marque').value, 
-              t = document.getElementById('u-type-cle').value, 
-              p = document.getElementById('u-type-puce').value;
+        const m = document.getElementById('u-marque').value;
+        const t = document.getElementById('u-type-cle').value;
+        const p = document.getElementById('u-type-puce').value;
         const liste = catalogue.filter(c => c.marque === m && c.type_cle === t && c.type_puce === p);
-        
         document.getElementById('grille-cles').innerHTML = liste.map(c => `
-            <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+            <div class="key-item" onclick="idChoisi='${c.id}'; this.parentElement.querySelectorAll('.key-item').forEach(i=>i.classList.remove('selected')); this.classList.add('selected'); document.getElementById('btn-valider').style.display='block'">
                 <img src="${c.image || ''}">
-                <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${c.prix}€</span></div>
-                <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${c.prix_akl || 'N/A'}€</span></div>
+                <p>Double: ${c.prix}€<br>AKL: ${c.prix_akl}€</p>
             </div>`).join('');
         document.getElementById('u-grille-container').classList.remove('hidden');
     }
 
-    function selectionnerCle(id, el) {
-        idChoisi = id;
-        document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
-        el.classList.add('selected');
-        document.getElementById('btn-valider').style.display = 'block';
-    }
-
-    // --- FORMULAIRE ET WHATSAPP ---
-    function majPrixRecap() {
-        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
-        if(!cle) return;
-        const typeMission = document.getElementById('f-mission').value;
-        const prix = typeMission === "PERTE TOTALE" ? (cle.prix_akl || "Sur devis") : cle.prix;
-        document.getElementById('recap-cle').innerHTML = `<b>${cle.marque}</b> - ${cle.type_cle}<br>Puce: ${cle.type_puce}<br>Tarif sélectionné: <b>${prix}€</b>`;
-    }
-
-    function ouvrirFormulaire() { majPrixRecap(); changerPage('formulaire'); }
-
-    function envoyerWhatsApp() {
-        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
-        const mission = document.getElementById('f-mission').value;
-        const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
-        const tech = document.getElementById('f-tech').value;
-        const tel = (tech === "OLIVIER") ? "33749504047" : "33666824460";
-        const texte = `🚀 *MISSION - ${tech}*\n📍 *Type:* ${mission}\n👤 *Client:* ${document.getElementById('f-client').value}\n🚗 *Immat:* ${document.getElementById('f-immat').value}\n🔑 *Clé:* ${cle.marque} (${cle.type_cle})\n💰 *Prix:* ${prix}€\n🖼 *Photo:* ${cle.image}`;
-        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texte)}`, '_blank');
-    }
-
-    // --- ADMIN ---
+    // ADMIN
     async function uploadPhoto(input) {
-        const file = input.files[0]; if(!file) return;
-        document.getElementById('upload-status').innerText = "⏳ Envoi...";
-        const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', UPLOAD_PRESET);
-        try {
-            const res = await fetch(CLOUDINARY_URL, { method:'POST', body:fd }).then(r => r.json());
-            tempPhotoURL = res.secure_url;
-            document.getElementById('upload-status').innerText = "✅ OK";
-        } catch(e) { alert("Erreur upload photo"); }
+        document.getElementById('up-status').innerText = "⏳...";
+        const fd = new FormData(); fd.append('file', input.files[0]); fd.append('upload_preset', PRESET);
+        const res = await fetch(CLOUDINARY_URL, {method:'POST', body:fd}).then(r => r.json());
+        tempURL = res.secure_url;
+        document.getElementById('up-status').innerText = "✅ OK";
     }
 
-    async function ajouterCleGoogle() {
+    async function saveCle() {
         const btn = document.getElementById('btn-save');
-        const idExistante = document.getElementById('a-id').value;
         btn.disabled = true;
-        btn.innerText = "⏳ Enregistrement...";
-
         const data = {
-            action: idExistante ? "update" : "add", // Si un ID existe, on dit au script de mettre à jour
-            id: idExistante || "ID-"+Date.now(),
-            marque: document.getElementById('a-marque').value.toUpperCase(),
+            action: document.getElementById('a-id').value ? "update" : "add",
+            id: document.getElementById('a-id').value || "ID-"+Date.now(),
+            marque: document.getElementById('a-marque').value,
             type_cle: document.getElementById('a-type-cle').value,
             type_puce: document.getElementById('a-puce').value,
             prix: document.getElementById('a-prix').value,
             prix_akl: document.getElementById('a-prix-akl').value,
             commentaire: document.getElementById('a-comm').value,
-            image: tempPhotoURL
+            image: tempURL
         };
-
-        await fetch(SHEET_URL, { method:'POST', mode:'no-cors', body: JSON.stringify(data)});
-        alert("Action réussie !");
+        await fetch(SHEET_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
         location.reload();
     }
 
-    function preparerModification(id) {
-        const cle = catalogue.find(c => String(c.id) === String(id));
-        if(!cle) return;
-
-        document.getElementById('admin-form-title').innerText = "✏️ Modifier " + cle.marque;
-        document.getElementById('a-id').value = cle.id;
-        document.getElementById('a-marque').value = cle.marque;
-        document.getElementById('a-type-cle').value = cle.type_cle;
-        document.getElementById('a-puce').value = cle.type_puce;
-        document.getElementById('a-prix').value = cle.prix;
-        document.getElementById('a-prix-akl').value = cle.prix_akl;
-        document.getElementById('a-comm').value = cle.commentaire;
-        tempPhotoURL = cle.image;
-        
-        document.getElementById('btn-save').innerText = "METTRE À JOUR";
-        document.getElementById('btn-cancel-edit').classList.remove('hidden');
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
-
-    function resetAdminForm() {
-        document.getElementById('admin-form-title').innerText = "Ajouter au Catalogue";
-        document.getElementById('a-id').value = "";
-        document.getElementById('btn-save').innerText = "ENREGISTRER";
-        document.getElementById('btn-cancel-edit').classList.add('hidden');
-        document.getElementById('a-marque').value = "";
-        tempPhotoURL = null;
-    }
-
-    async function supprimer(id) {
-        if(!confirm("Supprimer définitivement cette clé ?")) return;
-        await fetch(SHEET_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({action:"delete", id:id})});
-        location.reload();
-    }
-
-    function initTableAdmin() {
+    function initAdmin() {
         document.getElementById('liste-admin').innerHTML = '<table>' + catalogue.map(c => `
             <tr>
                 <td><img src="${c.image}" class="img-mini"></td>
-                <td><b>${c.marque}</b><br><small>${c.type_cle}</small></td>
-                <td style="text-align:right">
-                    <button onclick="preparerModification('${c.id}')" style="background:var(--secondary); color:white; margin-right:5px">✏️</button>
-                    <button onclick="supprimer('${c.id}')" style="background:var(--danger); color:white">X</button>
+                <td>${c.marque}</td>
+                <td>
+                    <button onclick="editForm('${c.id}')">✏️</button>
+                    <button onclick="deleteCle('${c.id}')" style="background:var(--danger); color:white;">X</button>
                 </td>
             </tr>`).join('') + '</table>';
     }
+
+    function editForm(id) {
+        const c = catalogue.find(i => i.id == id);
+        document.getElementById('a-id').value = c.id;
+        document.getElementById('a-marque').value = c.marque;
+        document.getElementById('a-type-cle').value = c.type_cle;
+        document.getElementById('a-puce').value = c.type_puce;
+        document.getElementById('a-prix').value = c.prix;
+        document.getElementById('a-prix-akl').value = c.prix_akl;
+        document.getElementById('a-comm').value = c.commentaire;
+        tempURL = c.image;
+        document.getElementById('admin-title').innerText = "Modifier clé";
+        document.getElementById('btn-cancel').classList.remove('hidden');
+        window.scrollTo(0,0);
+    }
+
+    async function deleteCle(id) {
+        if(confirm("Supprimer ?")) {
+            await fetch(SHEET_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({action:"delete", id:id})});
+            location.reload();
+        }
+    }
+
+    function resetAdminForm() { location.reload(); }
 
     window.onload = chargerDonnees;
 </script>
