@@ -132,7 +132,7 @@
     async function uploadPhoto(input) {
         document.getElementById('up-status').innerText = "⏳...";
         const fd = new FormData(); fd.append('file', input.files[0]); fd.append('upload_preset', PRESET);
-        const res = await fetch(https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload   , {method:'POST', body:fd}).then(r => r.json());
+        const res = await fetch( , {method:'POST', body:fd}).then(r => r.json());
         tempURL = res.secure_url;
         document.getElementById('up-status').innerText = "✅ OK";
     }
