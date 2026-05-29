@@ -31,7 +31,7 @@
 <header><h1>🔑 EXPRESS MB</h1></header>
 
 <nav>
-    <button style="background:var(--secondary); color:white;" onclick="changerPage('user')">📱 CLIENT</button>
+    <button style="background:var(--secondary); color:white;" onclick="changerPage('user')">📱 Collaborateur</button>
     <button style="background:#7f8c8d; color:white;" onclick="accesAdmin()">⚙️ ADMIN</button>
 </nav>
 
@@ -205,20 +205,39 @@
 
     // --- AFFICHAGE DE LA GRILLE FINALE ---
 
-    function majGrille() {
-    // 1. On récupère les valeurs des menus
-    const marqueSelectionnee = document.getElementById('u-marque').value;
-    const typeSelectionne = document.getElementById('u-type-cle').value;
-    const puceSelectionnee = document.getElementById('u-type-puce').value;
-
+   function majGrille() {
+    const m = document.getElementById('u-marque').value;
+    const t = document.getElementById('u-type-cle').value;
+    const p = document.getElementById('u-type-puce').value;
     const container = document.getElementById('grille-cles');
-    const grilleSection = document.getElementById('u-grille-container');
 
-    // 2. Sécurité : si la puce n'est pas choisie, on sort
-    if (!puceSelectionnee) {
-        grilleSection.classList.add('hidden');
-        return;
+    if (!p) return;
+
+    // Filtrage
+    const resultats = catalogue.filter(c => {
+        return String(c.marque).toUpperCase().trim() === String(m).toUpperCase().trim() &&
+               String(c.type_cle).toUpperCase().trim() === String(t).toUpperCase().trim() &&
+               String(c.type_puce).toUpperCase().trim() === String(p).toUpperCase().trim();
+    });
+
+    if (resultats.length > 0) {
+        container.innerHTML = resultats.map(c => {
+            const img = c.image || "";
+            const imageAAfficher = (img && img.startsWith('http')) ? img : 'https://via.placeholder.com/150?text=Pas+d+image';
+            return `
+                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                    <img src="${imageAAfficher}" alt="Clé">
+                    <p><strong>${c.type_cle || 'Modèle'}</strong><br>
+                    <small>ID: ${c.id}</small></p>
+                </div>`;
+        }).join('');
+        document.getElementById('u-grille-container').classList.remove('hidden');
+    } else {
+        container.innerHTML = "<p style='padding:20px;'>⚠️ Aucun modèle trouvé.</p>";
+        document.getElementById('u-grille-container').classList.remove('hidden');
     }
+    document.getElementById('btn-valider').style.display = 'none';
+} 
 
     // 3. FILTRAGE RIGOUREUX
     // On compare tout en MAJUSCULES et sans espaces pour éviter les erreurs de frappe
