@@ -161,8 +161,36 @@
         document.getElementById('btn-valider').style.display = 'block';
     }
 
-    function ouvrirFormulaire() { alert("Ouverture du formulaire pour la clé " + idChoisi); }
+function ouvrirFormulaire() {
+    // 1. On récupère les infos complètes de la clé choisie
+    const cle = catalogue.find(c => c.id === idChoisi);
+    
+    if (!cle) {
+        alert("Veuillez d'abord sélectionner une clé.");
+        return;
+    }
 
+    // 2. CONFIGURATION DU DESTINATAIRE (Mets le numéro du technicien ici)
+    // Format : 33666824460 (sans le +, sans espaces)
+    const numeroTel = "33600000000"; 
+
+    // 3. CONSTRUCTION DU MESSAGE
+    const message = `*NOUVELLE INTERVENTION EXPRESS MB*%0A` +
+                    `----------------------------%0A` +
+                    `• *MARQUE :* ${cle.marque}%0A` +
+                    `• *TYPE :* ${cle.type_cle}%0A` +
+                    `• *PUCE :* ${cle.type_puce}%0A` +
+                    `• *PRIX DOUBLE :* ${cle.prix}€%0A` +
+                    `• *PRIX AKL :* ${cle.prix_akl}€%0A` +
+                    `• *NOTES :* ${cle.commentaire || 'Aucune'}%0A` +
+                    `----------------------------%0A` +
+                    `_Lien image :_ ${cle.image}`;
+
+    // 4. OUVERTURE DE WHATSAPP
+    const urlWhatsapp = `https://wa.me/${numeroTel}?text=${message}`;
+    
+    window.open(urlWhatsapp, "_blank");
+}
     // --- FONCTIONS ADMIN ---
     async function uploadPhoto(input) {
         if (!input.files[0]) return;
