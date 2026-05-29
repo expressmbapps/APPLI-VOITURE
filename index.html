@@ -323,7 +323,7 @@ async function saveCle() {
         type_puce: document.getElementById('a-puce').value.trim(),
         prix: document.getElementById('a-prix').value,
         prix_akl: document.getElementById('a-prix-akl').value,
-        image: tempURL || "" // Utilise l'URL Cloudinary si elle existe
+        image: tempURL || "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload" // Utilise l'URL Cloudinary si elle existe
     };
 
     console.log("Données envoyées :", data);
