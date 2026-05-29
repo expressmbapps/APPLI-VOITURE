@@ -231,19 +231,36 @@
     // 4. AFFICHAGE
     if (resultats.length > 0) {
         container.innerHTML = resultats.map(c => {
-            // On vérifie si l'image existe, sinon on met un placeholder
-            const imageAAfficher = (c.image && c.image.startsWith('http')) ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
+            // SECURITÉ : On cherche l'image peu importe si la colonne s'appelle 'image' ou 'Image'
+            const img = c.image || c.Image || "";
+            const imageAAfficher = (img && img.startsWith('http')) 
+                ? img 
+                : 'https://via.placeholder.com/150?text=Pas+d+image';
             
+            // SECURITÉ : On cherche le type de clé avec toutes les variantes possibles
+            const nomCle = c.type_cle || c.type_cle || c.typeCle || "Modèle sans nom";
+            
+            // SECURITÉ : On s'assure que l'ID existe pour le clic
+            const idCle = c.id || "0";
+
             return `
-                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                <div class="key-item" onclick="selectionnerCle('${idCle}', this)">
                     <img src="${imageAAfficher}" alt="Clé">
                     <p>
-                        <strong>${c.type_cle}</strong><br>
-                        <span style="font-size:11px; color:#666;">Réf: ${String(c.id).slice(-5)}</span>
+                        <strong>${nomCle}</strong><br>
+                        <span style="font-size:11px; color:#666;">Réf: ${String(idCle).slice(-5)}</span>
                     </p>
                 </div>
             `;
         }).join('');
+        
+        // On rend la grille visible
+        document.getElementById('u-grille-container').classList.remove('hidden');
+    } else {
+        // Ce message apparaîtra si resultats est vide
+        container.innerHTML = "<p style='padding:20px;'>Aucun résultat pour cette sélection.</p>";
+        document.getElementById('u-grille-container').classList.remove('hidden');
+    }
         
         grilleSection.classList.remove('hidden');
     } else {
