@@ -206,34 +206,55 @@
     // --- AFFICHAGE DE LA GRILLE FINALE ---
 
     function majGrille() {
-        const m = document.getElementById('u-marque').value;
-        const t = document.getElementById('u-type-cle').value;
-        const p = document.getElementById('u-type-puce').value;
+    // 1. On récupère les valeurs des menus
+    const marqueSelectionnee = document.getElementById('u-marque').value;
+    const typeSelectionne = document.getElementById('u-type-cle').value;
+    const puceSelectionnee = document.getElementById('u-type-puce').value;
 
-        if (!p) return;
+    const container = document.getElementById('grille-cles');
+    const grilleSection = document.getElementById('u-grille-container');
 
-        // Filtrage strict pour l'affichage des modèles
-        const liste = catalogue.filter(c => 
-            c.marque === m && 
-            c.type_cle === t && 
-            c.type_puce === p
-        );
-
-        const container = document.getElementById('grille-cles');
-        
-        if (liste.length === 0) {
-            container.innerHTML = "<p>Aucun modèle visuel trouvé.</p>";
-        } else {
-            container.innerHTML = liste.map(c => `
-                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-                    <img src="${c.image || 'https://via.placeholder.com/150'}" onerror="this.src='https://via.placeholder.com/150'">
-                    <p><b>${c.type_cle}</b><br>Réf: ${c.id.toString().substring(0,8)}</p>
-                </div>`).join('');
-        }
-        
-        document.getElementById('u-grille-container').classList.remove('hidden');
-        document.getElementById('btn-valider').style.display = 'none'; // Cacher le bouton jusqu'à sélection
+    // 2. Sécurité : si la puce n'est pas choisie, on sort
+    if (!puceSelectionnee) {
+        grilleSection.classList.add('hidden');
+        return;
     }
+
+    // 3. FILTRAGE RIGOUREUX
+    // On compare tout en MAJUSCULES et sans espaces pour éviter les erreurs de frappe
+    const resultats = catalogue.filter(c => {
+        return String(c.marque).trim().toUpperCase() === String(marqueSelectionnee).trim().toUpperCase() &&
+               String(c.type_cle).trim().toUpperCase() === String(typeSelectionne).trim().toUpperCase() &&
+               String(c.type_puce).trim().toUpperCase() === String(puceSelectionnee).trim().toUpperCase();
+    });
+
+    // 4. AFFICHAGE
+    if (resultats.length > 0) {
+        container.innerHTML = resultats.map(c => {
+            // On vérifie si l'image existe, sinon on met un placeholder
+            const imageAAfficher = (c.image && c.image.startsWith('http')) ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
+            
+            return `
+                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                    <img src="${imageAAfficher}" alt="Clé">
+                    <p>
+                        <strong>${c.type_cle}</strong><br>
+                        <span style="font-size:11px; color:#666;">Réf: ${String(c.id).slice(-5)}</span>
+                    </p>
+                </div>
+            `;
+        }).join('');
+        
+        grilleSection.classList.remove('hidden');
+    } else {
+        // Si par miracle on ne trouve rien alors que les menus ont fonctionné
+        container.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>⚠️ Erreur d'affichage : aucun modèle trouvé dans la base.</p>";
+        grilleSection.classList.remove('hidden');
+    }
+
+    // On cache le bouton de validation tant qu'on n'a pas cliqué sur une image
+    document.getElementById('btn-valider').style.display = 'none';
+}
 
     // --- LE RESTE DES FONCTIONS (NAVIGATION, WHATSAPP, ADMIN) RESTE IDENTIQUE ---
 
