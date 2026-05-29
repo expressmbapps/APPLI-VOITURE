@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EXPRESS MB - Catalogue Pro</title>
+    <title>EXPRESS MB - Catalogue & WhatsApp</title>
     <style>
         :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; }
         body { font-family: sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
@@ -16,13 +16,10 @@
         button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
         .action-btn { width: 100%; background: var(--success); color: white; padding: 15px; font-size: 18px; margin-top: 10px; }
         .btn-whatsapp { background: var(--whatsapp); color: white; }
-        
-        /* GRILLE D'IMAGES */
         .key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
         .key-item { border: 2px solid #eee; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; background: white; transition: 0.2s; }
-        .key-item.selected { border-color: var(--success); background: #e8f8f0; transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .key-item.selected { border-color: var(--success); background: #e8f8f0; transform: scale(1.02); }
         .key-item img { width: 100%; height: 110px; object-fit: contain; }
-        
         .recap { background: #eef2f7; padding: 15px; border-left: 5px solid var(--secondary); margin-bottom: 20px; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
@@ -44,13 +41,12 @@
     <div id="page-user" class="page hidden">
         <div class="card">
             <h2>Sélectionner la clé</h2>
-            <select id="u-marque" onchange="majFamilles()"><option value="">-- Choisir Marque --</option></select>
-            <select id="u-type-cle" onchange="majPuces()" disabled><option value="">-- Type de clé --</option></select>
-            <select id="u-type-puce" onchange="majGrille()" disabled><option value="">-- Type de puce --</option></select>
+            <select id="u-marque" onchange="majFamilles()"><option value="">-- Charger le catalogue --</option></select>
+            <select id="u-type-cle" onchange="majPuces()" disabled></select>
+            <select id="u-type-puce" onchange="majGrille()" disabled></select>
 
             <div id="u-grille-container" class="hidden">
-                <hr>
-                <p><b>Sélectionnez le modèle visuel :</b></p>
+                <hr><p><b>Sélectionnez le modèle visuel :</b></p>
                 <div id="grille-cles" class="key-grid"></div>
                 <button class="action-btn" id="btn-valider" onclick="ouvrirFormulaire()" style="display:none">Démarrer l'intervention</button>
             </div>
@@ -61,7 +57,6 @@
         <div class="card">
             <button onclick="changerPage('user')" style="background:none; color:var(--secondary); padding:0; margin-bottom:15px; font-weight:bold;">⬅ Retour</button>
             <h2>Fiche d'intervention</h2>
-            
             <div id="recap-cle" class="recap"></div>
 
             <label><b>Type de mission :</b></label>
@@ -78,56 +73,64 @@
 
             <label><b>Nom du Client :</b></label>
             <input type="text" id="f-client" placeholder="Ex: M. Martin">
-            
             <label><b>Immatriculation :</b></label>
             <input type="text" id="f-immat" placeholder="Ex: AB-123-CD">
-            
             <label><b>Téléphone du client :</b></label>
             <input type="text" id="f-tel" placeholder="Ex: 06 00 00 00 00">
-            
             <label><b>Notes supplémentaires :</b></label>
             <textarea id="f-notes" rows="3" placeholder="Adresse, horaires..."></textarea>
 
-            <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER MISSION WHATSAPP</button>
+            <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER PAR WHATSAPP</button>
         </div>
     </div>
 
     <div id="page-admin" class="page hidden">
         <div class="card">
-            <h2>Administration</h2>
-            <p>Le catalogue est synchronisé avec Google Sheets.</p>
+            <h2>Ajouter au Catalogue</h2>
+            <input type="text" id="a-marque" placeholder="MARQUE">
+            <input type="text" id="a-type" placeholder="TYPE (PLIP, CARTE...)">
+            <input type="text" id="a-puce" placeholder="N° PUCE">
+            <input type="number" id="a-prix" placeholder="PRIX DOUBLE (€)">
+            <input type="number" id="a-prix-akl" placeholder="PRIX AKL (€)">
+            <textarea id="a-comm" placeholder="Notes techniques..."></textarea>
+            
+            <label><b>Photo :</b></label>
+            <input type="file" accept="image/*" onchange="uploadPhoto(this)">
+            <p id="up-status">📸 Aucune photo chargée</p>
+
+            <button class="action-btn" onclick="saveCle()">ENREGISTRER DANS LE CLOUD</button>
+        </div>
+        <div class="card">
+            <h3>Aperçu du Catalogue</h3>
             <div id="liste-admin"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
+    // ================= CONFIGURATION =================
     const SHEET_URL = "https://script.google.com/macros/s/AKfycbxZGdihSRDaAkHM4hSWKWubhPkkVloL_FeyZcXW2ryPIbfxlGc-BIKUjU9OgbtJ7XIk/exec"; 
-    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload"; // Format: https://api.cloudinary.com/v1_1/nom_de_ton_cloud/image/upload
-const PRESET = "CATALOGUE";
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload"; 
+    const PRESET = "CATALOGUE";
+    // =================================================
+
     let catalogue = [];
     let idChoisi = null;
+    let tempURL = null;
 
-    // Chargement initial
     async function chargerDonnees() {
         try {
             const res = await fetch(SHEET_URL);
             const rawData = await res.json();
-            // Harmonisation des noms de colonnes
             catalogue = rawData.map(item => {
                 let newItem = {};
-                for (let key in item) {
-                    newItem[key.toLowerCase().replace("-", "_")] = item[key];
-                }
+                for (let key in item) { newItem[key.toLowerCase().replace("-", "_")] = item[key]; }
                 return newItem;
             });
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('page-user').classList.remove('hidden');
             initMarques();
-        } catch (err) {
-            document.getElementById('loader').innerText = "❌ Erreur catalogue";
-        }
+        } catch (err) { console.error(err); }
     }
 
     function changerPage(p) {
@@ -138,7 +141,7 @@ const PRESET = "CATALOGUE";
 
     function accesAdmin() { if(prompt("Code:") === "1234") changerPage('admin'); }
 
-    // --- FILTRES ---
+    // FILTRES
     function initMarques() {
         const sel = document.getElementById('u-marque');
         const marques = [...new Set(catalogue.map(c => c.marque))].filter(m => m).sort();
@@ -152,7 +155,6 @@ const PRESET = "CATALOGUE";
         sel.innerHTML = '<option value="">-- Type --</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
         sel.disabled = false;
         document.getElementById('u-type-puce').disabled = true;
-        document.getElementById('u-grille-container').classList.add('hidden');
     }
 
     function majPuces() {
@@ -169,15 +171,12 @@ const PRESET = "CATALOGUE";
         const t = document.getElementById('u-type-cle').value;
         const p = document.getElementById('u-type-puce').value;
         const liste = catalogue.filter(c => c.marque === m && c.type_cle === t && c.type_puce === p);
-        
         const container = document.getElementById('grille-cles');
-        // On affiche TOUTES les clés trouvées
         container.innerHTML = liste.map(c => `
             <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
                 <img src="${c.image || 'https://via.placeholder.com/150'}">
-                <p>Double: ${c.prix}€<br>AKL: ${c.prix_akl}€</p>
-            </div>
-        `).join('');
+                <p><b>${c.type_cle}</b><br>Double: ${c.prix}€</p>
+            </div>`).join('');
         document.getElementById('u-grille-container').classList.remove('hidden');
     }
 
@@ -188,57 +187,75 @@ const PRESET = "CATALOGUE";
         document.getElementById('btn-valider').style.display = 'block';
     }
 
-    // --- FORMULAIRE ET WHATSAPP ---
+    // INTERVENTION
     function actualiserPrixRecap() {
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         const mission = document.getElementById('f-mission').value;
-        const prixAffiché = (mission === "DOUBLE DE CLÉ") ? cle.prix : cle.prix_akl;
-        
+        const prix = (mission === "DOUBLE DE CLÉ") ? cle.prix : cle.prix_akl;
         document.getElementById('recap-cle').innerHTML = `
             <table>
-                <tr><td><b>Véhicule :</b></td><td>${cle.marque}</td></tr>
-                <tr><td><b>Type :</b></td><td>${cle.type_cle} (${cle.type_puce})</td></tr>
-                <tr><td><b>Prix Intervention :</b></td><td><b style="color:var(--success); font-size:20px;">${prixAffiché} €</b></td></tr>
+                <tr><td><b>Véhicule:</b></td><td>${cle.marque}</td></tr>
+                <tr><td><b>Prix:</b></td><td><b style="color:var(--success); font-size:18px;">${prix} €</b></td></tr>
             </table>`;
     }
 
-    function ouvrirFormulaire() {
-        actualiserPrixRecap();
-        changerPage('formulaire');
-    }
+    function ouvrirFormulaire() { actualiserPrixRecap(); changerPage('formulaire'); }
 
     function envoyerWhatsApp() {
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         const tech = document.getElementById('f-tech').value;
         const mission = document.getElementById('f-mission').value;
         const prix = (mission === "DOUBLE DE CLÉ") ? cle.prix : cle.prix_akl;
-        
-        // --- CONFIGURATION NUMÉROS ---
-        const telTech = (tech === "OLIVIER") ? "33666824460" : "33600000000"; 
+        const telTech = (tech === "OLIVIER") ? "33666824460" : "33611111111"; // <--- MODIFIER ICI
 
         const texte = `🚀 *MISSION EXPRESS MB - ${tech}* \n\n` +
-                      `📍 *MISSION :* ${mission}\n` +
-                      `👤 *CLIENT :* ${document.getElementById('f-client').value}\n` +
-                      `🚗 *IMMAT :* ${document.getElementById('f-immat').value}\n` +
-                      `📱 *TEL :* ${document.getElementById('f-tel').value}\n\n` +
-                      `🔑 *VÉHICULE :* ${cle.marque} ${cle.type_cle}\n` +
-                      `📟 *PUCE :* ${cle.type_puce}\n` +
-                      `💰 *PRIX À ENCAISSER :* ${prix}€\n\n` +
-                      `📝 *NOTES :* ${document.getElementById('f-notes').value}\n` +
-                      `🖼 *IMAGE :* ${cle.image}`;
+                      `📍 *MISSION:* ${mission}\n` +
+                      `👤 *CLIENT:* ${document.getElementById('f-client').value}\n` +
+                      `🚗 *IMMAT:* ${document.getElementById('f-immat').value}\n` +
+                      `📱 *TEL:* ${document.getElementById('f-tel').value}\n\n` +
+                      `🔑 *VÉHICULE:* ${cle.marque} ${cle.type_cle}\n` +
+                      `💰 *PRIX:* ${prix}€\n\n` +
+                      `🖼 *IMAGE:* ${cle.image}`;
 
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
+    }
+
+    // ADMIN FUNCTIONS
+    async function uploadPhoto(input) {
+        if (!input.files[0]) return;
+        document.getElementById('up-status').innerText = "⏳ Upload...";
+        const fd = new FormData();
+        fd.append('file', input.files[0]);
+        fd.append('upload_preset', PRESET);
+        try {
+            const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: fd });
+            const data = await res.json();
+            tempURL = data.secure_url;
+            document.getElementById('up-status').innerText = "✅ Prêt";
+        } catch (err) { document.getElementById('up-status').innerText = "❌ Erreur"; }
+    }
+
+    async function saveCle() {
+        const data = {
+            action: "add",
+            id: "ID-" + Date.now(),
+            marque: document.getElementById('a-marque').value.toUpperCase(),
+            type_cle: document.getElementById('a-type').value,
+            type_puce: document.getElementById('a-puce').value,
+            prix: document.getElementById('a-prix').value,
+            prix_akl: document.getElementById('a-prix-akl').value,
+            image: tempURL || ""
+        };
+        await fetch(SHEET_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
+        alert("Enregistré !");
+        location.reload();
     }
 
     function initTableAdmin() {
         const div = document.getElementById('liste-admin');
         div.innerHTML = '<table>' + catalogue.slice(0,10).map(c => `
-            <tr>
-                <td><img src="${c.image}" class="img-mini"></td>
-                <td>${c.marque}</td>
-                <td>${c.prix}€ / ${c.prix_akl}€</td>
-            </tr>
-        `).join('') + '</table><p>... voir Google Sheets pour la liste complète.</p>';
+            <tr><td><img src="${c.image}" class="img-mini"></td><td>${c.marque}</td></tr>
+        `).join('') + '</table>';
     }
 
     window.onload = chargerDonnees;
