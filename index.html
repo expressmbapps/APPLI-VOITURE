@@ -85,26 +85,25 @@
     </div>
 
     <div id="page-admin" class="page hidden">
-        <div class="card">
-            <h2>Ajouter au Catalogue</h2>
-            <input type="text" id="a-marque" placeholder="MARQUE">
-            <input type="text" id="a-type" placeholder="TYPE (PLIP, CARTE...)">
-            <input type="text" id="a-puce" placeholder="N° PUCE">
-            <input type="number" id="a-prix" placeholder="PRIX DOUBLE (€)">
-            <input type="number" id="a-prix-akl" placeholder="PRIX AKL (€)">
-            <textarea id="a-comm" placeholder="Notes techniques..."></textarea>
-            
-            <label><b>Photo :</b></label>
-            <input type="file" accept="image/*" onchange="uploadPhoto(this)">
-            <p id="up-status">📸 Aucune photo chargée</p>
+    <div class="card">
+        <h2>Ajouter au Catalogue</h2>
+        <input type="text" id="a-marque" placeholder="MARQUE">
+        <input type="text" id="a-type" placeholder="TYPE (PLIP, CARTE...)">
+        <input type="text" id="a-puce" placeholder="N° PUCE">
+        <input type="number" id="a-prix" placeholder="PRIX DOUBLE (€)">
+        <input type="number" id="a-prix-akl" placeholder="PRIX AKL (€)"> <textarea id="a-comm" placeholder="Notes techniques..."></textarea>
+        
+        <label><b>Photo :</b></label>
+        <input type="file" accept="image/*" onchange="uploadPhoto(this)">
+        <p id="up-status" style="color: var(--secondary); font-weight: bold;">📸 Aucune photo chargée</p>
 
-            <button class="action-btn" onclick="saveCle()">ENREGISTRER DANS LE CLOUD</button>
-        </div>
-        <div class="card">
-            <h3>Aperçu du Catalogue</h3>
-            <div id="liste-admin"></div>
-        </div>
+        <button class="action-btn" id="btn-save-admin" onclick="saveCle()">ENREGISTRER DANS LE CLOUD</button>
     </div>
+    <div class="card">
+        <h3>Aperçu du Catalogue</h3>
+        <div id="liste-admin"></div>
+    </div>
+</div>
 </div>
 
 <script>
@@ -285,7 +284,47 @@
 
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
     }
+async function saveCle() {
+    const btn = document.getElementById('btn-save-admin');
+    
+    // Vérification des champs obligatoires
+    const marque = document.getElementById('a-marque').value;
+    if (!marque) { alert("Merci de saisir au moins la marque"); return; }
 
+    btn.disabled = true;
+    btn.innerText = "⏳ Enregistrement en cours...";
+
+    const data = {
+        action: "add",
+        id: "ID-" + Date.now(),
+        marque: marque.toUpperCase().trim(),
+        type_cle: document.getElementById('a-type').value.trim(),
+        type_puce: document.getElementById('a-puce').value.trim(),
+        prix: document.getElementById('a-prix').value,
+        prix_akl: document.getElementById('a-prix-akl').value,
+        image: tempURL || "" // Utilise l'URL Cloudinary si elle existe
+    };
+
+    console.log("Données envoyées :", data);
+
+    try {
+        // Envoi vers Google Apps Script
+        const response = await fetch(SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Important pour Google Scripts
+            cache: 'no-cache',
+            body: JSON.stringify(data)
+        });
+
+        alert("✅ Succès ! La clé a été ajoutée au Google Sheet.");
+        location.reload(); // Recharge la page pour actualiser le catalogue
+    } catch (error) {
+        console.error("Erreur détaillée:", error);
+        alert("❌ Erreur lors de l'enregistrement. Vérifiez votre connexion.");
+        btn.disabled = false;
+        btn.innerText = "ENREGISTRER DANS LE CLOUD";
+    }
+}
     async function uploadPhoto(input) {
         if (!input.files[0]) return;
         document.getElementById('up-status').innerText = "⏳ Upload...";
@@ -300,22 +339,7 @@
         } catch (err) { document.getElementById('up-status').innerText = "❌ Erreur"; }
     }
 
-    async function saveCle() {
-        const data = {
-            action: "add",
-            id: "ID-" + Date.now(),
-            marque: document.getElementById('a-marque').value.toUpperCase().trim(),
-            type_cle: document.getElementById('a-type').value.trim(),
-            type_puce: document.getElementById('a-puce').value.trim(),
-            prix: document.getElementById('a-prix').value,
-            prix_akl: document.getElementById('a-prix_akl').value,
-            image: tempURL || ""
-        };
-        await fetch(SHEET_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
-        alert("Enregistré !");
-        location.reload();
-    }
-
+   
     function initTableAdmin() {
         const div = document.getElementById('liste-admin');
         div.innerHTML = '<table>' + catalogue.slice(0,10).map(c => `
