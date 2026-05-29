@@ -118,20 +118,125 @@
     let idChoisi = null;
     let tempURL = null;
 
+    // Chargement initial
     async function chargerDonnees() {
         try {
             const res = await fetch(SHEET_URL);
             const rawData = await res.json();
+            
+            // Nettoyage et harmonisation des données
             catalogue = rawData.map(item => {
                 let newItem = {};
-                for (let key in item) { newItem[key.toLowerCase().replace("-", "_")] = item[key]; }
+                for (let key in item) {
+                    let cleanKey = key.toLowerCase().replace("-", "_").trim();
+                    let val = item[key];
+                    // Si c'est du texte, on enlève les espaces inutiles
+                    newItem[cleanKey] = (typeof val === 'string') ? val.trim() : val;
+                }
                 return newItem;
             });
+
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('page-user').classList.remove('hidden');
             initMarques();
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error("Erreur de chargement:", err);
+            document.getElementById('loader').innerText = "❌ Erreur de connexion au catalogue";
+        }
     }
+
+    // --- LOGIQUE DES MENUS DÉROULANTS (SANS DOUBLONS) ---
+
+    function initMarques() {
+        const sel = document.getElementById('u-marque');
+        // On récupère les marques uniques
+        const marques = [...new Set(catalogue.map(c => c.marque))].filter(m => m).sort();
+        sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + 
+                        marques.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
+    function majFamilles() {
+        const m = document.getElementById('u-marque').value;
+        const selType = document.getElementById('u-type-cle');
+        const selPuce = document.getElementById('u-type-puce');
+        
+        if (!m) {
+            selType.disabled = true;
+            selPuce.disabled = true;
+            return;
+        }
+
+        // On filtre les types de clés UNIQUES pour cette marque
+        const types = [...new Set(catalogue
+            .filter(c => c.marque === m)
+            .map(c => c.type_cle))]
+            .filter(t => t).sort();
+
+        selType.innerHTML = '<option value="">-- Type de clé --</option>' + 
+                            types.map(t => `<option value="${t}">${t}</option>`).join('');
+        
+        selType.disabled = false;
+        selPuce.disabled = true;
+        selPuce.innerHTML = '<option value="">-- Attente type --</option>';
+        document.getElementById('u-grille-container').classList.add('hidden');
+    }
+
+    function majPuces() {
+        const m = document.getElementById('u-marque').value;
+        const t = document.getElementById('u-type-cle').value;
+        const selPuce = document.getElementById('u-type-puce');
+
+        if (!t) {
+            selPuce.disabled = true;
+            return;
+        }
+
+        // On filtre les puces UNIQUES pour cette marque ET ce type
+        const puces = [...new Set(catalogue
+            .filter(c => c.marque === m && c.type_cle === t)
+            .map(c => c.type_puce))]
+            .filter(p => p).sort();
+
+        selPuce.innerHTML = '<option value="">-- Type de puce --</option>' + 
+                            puces.map(p => `<option value="${p}">${p}</option>`).join('');
+        
+        selPuce.disabled = false;
+        document.getElementById('u-grille-container').classList.add('hidden');
+    }
+
+    // --- AFFICHAGE DE LA GRILLE FINALE ---
+
+    function majGrille() {
+        const m = document.getElementById('u-marque').value;
+        const t = document.getElementById('u-type-cle').value;
+        const p = document.getElementById('u-type-puce').value;
+
+        if (!p) return;
+
+        // Filtrage strict pour l'affichage des modèles
+        const liste = catalogue.filter(c => 
+            c.marque === m && 
+            c.type_cle === t && 
+            c.type_puce === p
+        );
+
+        const container = document.getElementById('grille-cles');
+        
+        if (liste.length === 0) {
+            container.innerHTML = "<p>Aucun modèle visuel trouvé.</p>";
+        } else {
+            container.innerHTML = liste.map(c => `
+                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                    <img src="${c.image || 'https://via.placeholder.com/150'}" onerror="this.src='https://via.placeholder.com/150'">
+                    <p><b>${c.type_cle}</b><br>Réf: ${c.id.toString().substring(0,8)}</p>
+                </div>`).join('');
+        }
+        
+        document.getElementById('u-grille-container').classList.remove('hidden');
+        document.getElementById('btn-valider').style.display = 'none'; // Cacher le bouton jusqu'à sélection
+    }
+
+    // --- LE RESTE DES FONCTIONS (NAVIGATION, WHATSAPP, ADMIN) RESTE IDENTIQUE ---
 
     function changerPage(p) {
         document.querySelectorAll('.page').forEach(pg => pg.classList.add('hidden'));
@@ -141,45 +246,6 @@
 
     function accesAdmin() { if(prompt("Code:") === "1234") changerPage('admin'); }
 
-    // FILTRES
-    function initMarques() {
-        const sel = document.getElementById('u-marque');
-        const marques = [...new Set(catalogue.map(c => c.marque))].filter(m => m).sort();
-        sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + marques.map(m => `<option value="${m}">${m}</option>`).join('');
-    }
-
-    function majFamilles() {
-        const m = document.getElementById('u-marque').value;
-        const types = [...new Set(catalogue.filter(c => c.marque === m).map(c => c.type_cle))];
-        const sel = document.getElementById('u-type-cle');
-        sel.innerHTML = '<option value="">-- Type --</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
-        sel.disabled = false;
-        document.getElementById('u-type-puce').disabled = true;
-    }
-
-    function majPuces() {
-        const m = document.getElementById('u-marque').value;
-        const t = document.getElementById('u-type-cle').value;
-        const puces = [...new Set(catalogue.filter(c => c.marque === m && c.type_cle === t).map(c => c.type_puce))];
-        const sel = document.getElementById('u-type-puce');
-        sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
-        sel.disabled = false;
-    }
-
-    function majGrille() {
-        const m = document.getElementById('u-marque').value;
-        const t = document.getElementById('u-type-cle').value;
-        const p = document.getElementById('u-type-puce').value;
-        const liste = catalogue.filter(c => c.marque === m && c.type_cle === t && c.type_puce === p);
-        const container = document.getElementById('grille-cles');
-        container.innerHTML = liste.map(c => `
-            <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-                <img src="${c.image || 'https://via.placeholder.com/150'}">
-                <p><b>${c.type_cle}</b><br>Double: ${c.prix}€</p>
-            </div>`).join('');
-        document.getElementById('u-grille-container').classList.remove('hidden');
-    }
-
     function selectionnerCle(id, el) {
         idChoisi = id;
         document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
@@ -187,7 +253,6 @@
         document.getElementById('btn-valider').style.display = 'block';
     }
 
-    // INTERVENTION
     function actualiserPrixRecap() {
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         const mission = document.getElementById('f-mission').value;
@@ -195,6 +260,7 @@
         document.getElementById('recap-cle').innerHTML = `
             <table>
                 <tr><td><b>Véhicule:</b></td><td>${cle.marque}</td></tr>
+                <tr><td><b>Type:</b></td><td>${cle.type_cle}</td></tr>
                 <tr><td><b>Prix:</b></td><td><b style="color:var(--success); font-size:18px;">${prix} €</b></td></tr>
             </table>`;
     }
@@ -206,7 +272,7 @@
         const tech = document.getElementById('f-tech').value;
         const mission = document.getElementById('f-mission').value;
         const prix = (mission === "DOUBLE DE CLÉ") ? cle.prix : cle.prix_akl;
-        const telTech = (tech === "OLIVIER") ? "33666824460" : "33611111111"; // <--- MODIFIER ICI
+        const telTech = (tech === "OLIVIER") ? "33600000000" : "33611111111"; 
 
         const texte = `🚀 *MISSION EXPRESS MB - ${tech}* \n\n` +
                       `📍 *MISSION:* ${mission}\n` +
@@ -220,7 +286,6 @@
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
     }
 
-    // ADMIN FUNCTIONS
     async function uploadPhoto(input) {
         if (!input.files[0]) return;
         document.getElementById('up-status').innerText = "⏳ Upload...";
@@ -239,11 +304,11 @@
         const data = {
             action: "add",
             id: "ID-" + Date.now(),
-            marque: document.getElementById('a-marque').value.toUpperCase(),
-            type_cle: document.getElementById('a-type').value,
-            type_puce: document.getElementById('a-puce').value,
+            marque: document.getElementById('a-marque').value.toUpperCase().trim(),
+            type_cle: document.getElementById('a-type').value.trim(),
+            type_puce: document.getElementById('a-puce').value.trim(),
             prix: document.getElementById('a-prix').value,
-            prix_akl: document.getElementById('a-prix-akl').value,
+            prix_akl: document.getElementById('a-prix_akl').value,
             image: tempURL || ""
         };
         await fetch(SHEET_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
