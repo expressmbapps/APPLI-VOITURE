@@ -166,19 +166,39 @@
     }
 
     function majGrille() {
-        const m = document.getElementById('u-marque').value, 
-              t = document.getElementById('u-type-cle').value, 
-              p = document.getElementById('u-type-puce').value;
-        const liste = catalogue.filter(c => c.marque === m && c.type_cle === t && c.type_puce === p);
+    // On récupère les valeurs sélectionnées et on les nettoie (majuscules + sans espaces)
+    const m = document.getElementById('u-marque').value.trim().toUpperCase(), 
+          t = document.getElementById('u-type-cle').value.trim().toUpperCase(), 
+          p = document.getElementById('u-type-puce').value.trim().toUpperCase();
+          
+    // On filtre en nettoyant aussi les données du catalogue pour être sûr que ça corresponde
+    const liste = catalogue.filter(c => 
+        (c.marque || '').trim().toUpperCase() === m && 
+        (c.type_cle || '').trim().toUpperCase() === t && 
+        (c.type_puce || '').trim().toUpperCase() === p
+    );
+    
+    // Si la liste est vide, on met un petit message d'alerte
+    if (liste.length === 0) {
+        document.getElementById('grille-cles').innerHTML = "<p style='padding:10px; color:var(--danger);'>Aucune clé correspondante ou image manquante.</p>";
+        return;
+    }
+    
+    // Affichage de la grille avec une sécurité sur l'image
+    document.getElementById('grille-cles').innerHTML = liste.map(c => {
+        // Si c.image est vide ou indéfini, on peut mettre une image par défaut ou une icône
+        const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
         
-        document.getElementById('grille-cles').innerHTML = liste.map(c => `
+        return `
             <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-                <img src="${c.image || ''}">
+                <img src="${imageSrc}" alt="Clé ${c.marque}">
                 <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${c.prix}€</span></div>
                 <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${c.prix_akl || 'N/A'}€</span></div>
-            </div>`).join('');
-        document.getElementById('u-grille-container').classList.remove('hidden');
-    }
+            </div>`;
+    }).join('');
+    
+    document.getElementById('u-grille-container').classList.remove('hidden');
+}
 
     function selectionnerCle(id, el) {
         idChoisi = id;
