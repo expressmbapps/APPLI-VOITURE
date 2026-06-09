@@ -171,21 +171,14 @@
         );
 
        function rafraichirGrille(resultats) {
-    const container = document.getElementById('grille-cles');
-    
     container.innerHTML = resultats.map(c => `
-        <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-            <img src="${c.image || 'https://via.placeholder.com/150'}" onerror="this.src='https://via.placeholder.com/150'">
-            <p>
-                <b>PRIX : ${c.prix}</b>
-                <br>
-                <small>${c.prix_akl}</small>
-            </p>
-        </div>`).join('');
-
-    document.getElementById('u-grille-container').classList.remove('hidden');
-    document.getElementById('btn-valider').style.display = 'none';
-} // L'accolade manquante est ici
+            <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                <img src="${c.image || 'https://via.placeholder.com/150'}" onerror="this.src='https://via.placeholder.com/150'">
+                <p><b>${c.type_cle}</b><br><small>${c.id}</small></p>
+                <p><b>${c.prix}</b><br><small>${c.prix_akl}</small></p>
+            </div>`).join('');
+        document.getElementById('u-grille-container').classList.remove('hidden');
+        document.getElementById('btn-valider').style.display = 'none';
     function selectionnerCle(id, el) {
         idChoisi = id;
         document.querySelectorAll('.key-item').forEach(k => k.classList.remove('selected'));
