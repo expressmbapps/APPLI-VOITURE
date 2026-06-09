@@ -181,45 +181,22 @@
     }
 
     function majGrille() {
-        const m = document.getElementById('u-marque').value.trim().toUpperCase();
-        const t = document.getElementById('u-type-cle').value.trim();
-        const p = document.getElementById('u-type-puce').value.trim();
+    const m = document.getElementById('u-marque').value;
+    const t = document.getElementById('u-type-cle').value;
+    const p = document.getElementById('u-type-puce').value;
 
-        // Si l'utilisateur n'a pas tout choisi, on ne fait rien
-        if(!m || !t || !p) return;
-
-        // Filtrage ultra-souple pour éviter les bugs de casse ou d'espaces
-        const liste = catalogue.filter(c => {
-            const marqueSheet = (c.marque || '').trim().toUpperCase();
-            const typeSheet = (c.type_cle || '').trim();
-            const puceSheet = (c.type_puce || '').trim();
-            return marqueSheet === m && typeSheet === t && puceSheet === p;
-        });
-        
-        const grille = document.getElementById('grille-cles');
-        
-        if (liste.length === 0) {
-            grille.innerHTML = '<p style="color:red; text-align:center; padding:10px;">⚠️ Aucune clé trouvée pour cette sélection.</p>';
-            document.getElementById('u-grille-container').classList.remove('hidden');
-            return;
-        }
-
-        grille.innerHTML = liste.map(c => {
-            // Sécurité image manquante
-            const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
-            const prixDouble = c.prix ? c.prix + '€' : 'N/A';
-            const prixAkl = c.prix_akl ? c.prix_akl + '€' : 'N/A';
-            
-            return `
-                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-                    <img src="${imageSrc}">
-                    <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${prixDouble}</span></div>
-                    <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${prixAkl}</span></div>
-                </div>`;
-        }).join('');
-        
-        document.getElementById('u-grille-container').classList.remove('hidden');
-    }
+    const grille = document.getElementById('grille-cles');
+    
+    // CE BLOC VA NOUS DIRE CE QUI NE VA PAS
+    grille.innerHTML = `
+        <div style="background:#fff; border:1px solid #ccc; padding:10px; font-family:monospace; font-size:12px; grid-column:1/-1; text-align:left;">
+            <p><b>Tu as sélectionné :</b> Marque="${m}", Type="${t}", Puce="${p}"</p>
+            <p><b>Nombre total de clés reçues du Sheet :</b> ${catalogue.length}</p>
+            <p><b>Exemple de la 1ère clé du catalogue :</b> ${catalogue.length > 0 ? JSON.stringify(catalogue[0]) : 'Aucune donnée reçue !'}</p>
+        </div>
+    `;
+    document.getElementById('u-grille-container').classList.remove('hidden');
+}
     function selectionnerCle(id, el) {
         idChoisi = id;
         document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
