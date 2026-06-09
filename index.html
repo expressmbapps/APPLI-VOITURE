@@ -165,15 +165,15 @@
    function majFamilles() {
         const m = document.getElementById('u-marque').value;
         const sel = document.getElementById('u-type-cle');
-        // Sécurité : on filtre et on enlève les valeurs vides
+        
         const types = [...new Set(catalogue
-            .filter(c => (c.marque || '').trim().toUpperCase() === m.trim().toUpperCase())
-            .map(c => (c.type_cle || '').trim())
+            .filter(c => String(c.marque || '').trim().toUpperCase() === String(m).trim().toUpperCase())
+            .map(c => String(c.type_cle || '').trim())
         )].filter(Boolean).sort();
         
         sel.innerHTML = '<option value="">-- Type --</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
         sel.disabled = false;
-        // On réinitialise et désactive le menu suivant au cas où
+        
         document.getElementById('u-type-puce').innerHTML = '<option value="">-- Puce --</option>';
         document.getElementById('u-type-puce').disabled = true;
         document.getElementById('u-grille-container').classList.add('hidden');
@@ -183,10 +183,10 @@
         const m = document.getElementById('u-marque').value;
         const t = document.getElementById('u-type-cle').value;
         const sel = document.getElementById('u-type-puce');
-        // Sécurité : on filtre et on enlève les valeurs vides
+        
         const puces = [...new Set(catalogue
-            .filter(c => (c.marque || '').trim().toUpperCase() === m.trim().toUpperCase() && (c.type_cle || '').trim() === t.trim())
-            .map(c => (c.type_puce || '').trim())
+            .filter(c => String(c.marque || '').trim().toUpperCase() === String(m).trim().toUpperCase() && String(c.type_cle || '').trim() === String(t).trim())
+            .map(c => String(c.type_puce || '').trim())
         )].filter(Boolean).sort();
         
         sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
@@ -195,22 +195,43 @@
     }
 
     function majGrille() {
-    const m = document.getElementById('u-marque').value;
-    const t = document.getElementById('u-type-cle').value;
-    const p = document.getElementById('u-type-puce').value;
+        const m = document.getElementById('u-marque').value.trim().toUpperCase();
+        const t = document.getElementById('u-type-cle').value.trim().toUpperCase();
+        const p = document.getElementById('u-type-puce').value.trim().toUpperCase();
 
-    const grille = document.getElementById('grille-cles');
-    
-    // CE BLOC VA NOUS DIRE CE QUI NE VA PAS
-    grille.innerHTML = `
-        <div style="background:#fff; border:1px solid #ccc; padding:10px; font-family:monospace; font-size:12px; grid-column:1/-1; text-align:left;">
-            <p><b>Tu as sélectionné :</b> Marque="${m}", Type="${t}", Puce="${p}"</p>
-            <p><b>Nombre total de clés reçues du Sheet :</b> ${catalogue.length}</p>
-            <p><b>Exemple de la 1ère clé du catalogue :</b> ${catalogue.length > 0 ? JSON.stringify(catalogue[0]) : 'Aucune donnée reçue !'}</p>
-        </div>
-    `;
-    document.getElementById('u-grille-container').classList.remove('hidden');
-}
+        if(!m || !t || !p) return;
+
+        // Filtrage ultra-sécurisé en convertissant tout en chaînes de caractères (String)
+        const liste = catalogue.filter(c => {
+            const marqueSheet = String(c.marque || '').trim().toUpperCase();
+            const typeSheet = String(c.type_cle || '').trim().toUpperCase();
+            const puceSheet = String(c.type_puce || '').trim().toUpperCase();
+            return marqueSheet === m && typeSheet === t && puceSheet === p;
+        });
+        
+        const grille = document.getElementById('grille-cles');
+        
+        if (liste.length === 0) {
+            grille.innerHTML = '<p style="color:var(--danger); text-align:center; padding:10px; grid-column:1/-1;">⚠️ Aucune clé correspondante trouvée.</p>';
+            document.getElementById('u-grille-container').classList.remove('hidden');
+            return;
+        }
+
+        grille.innerHTML = liste.map(c => {
+            const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
+            const prixDouble = c.prix ? c.prix + '€' : 'N/A';
+            const prixAkl = c.prix_akl ? c.prix_akl + '€' : 'N/A';
+            
+            return `
+                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                    <img src="${imageSrc}">
+                    <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${prixDouble}</span></div>
+                    <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${prixAkl}</span></div>
+                </div>`;
+        }).join('');
+        
+        document.getElementById('u-grille-container').classList.remove('hidden');
+    }
     function selectionnerCle(id, el) {
         idChoisi = id;
         document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
