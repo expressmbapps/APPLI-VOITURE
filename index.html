@@ -123,14 +123,28 @@
 
     // --- CHARGEMENT ---
     async function chargerDonnees() {
-        try {
-            const response = await fetch(SHEET_URL);
-            catalogue = await response.json();
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('page-user').classList.remove('hidden');
-            initMarques();
-        } catch (e) { document.getElementById('loader').innerText = "❌ Erreur de chargement"; }
+    try {
+        const response = await fetch(SHEET_URL);
+        catalogue = await response.json();
+        
+        // --- BLOC DE TEST : S'AFFICHE REÇU DU GOOGLE SHEET ---
+        document.getElementById('loader').innerHTML = `
+            <div style="background: white; color: black; padding: 15px; text-align: left; border: 2px solid red; font-family: monospace; font-size: 13px;">
+                <h3>📊 TEST DE CONNEXION GOOGLE SHEET</h3>
+                <p><b>Nombre de lignes lues :</b> ${catalogue.length}</p>
+                <p><b>Structure exacte de ta première ligne :</b></p>
+                <pre>${catalogue.length > 0 ? JSON.stringify(catalogue[0], null, 2) : "Aucune donnée reçue !"}</pre>
+                <hr>
+                <button onclick="document.getElementById('loader').classList.add('hidden'); document.getElementById('page-user').classList.remove('hidden');" style="background:green; color:white; padding:10px;">
+                    Clique ici pour continuer vers l'appli
+                </button>
+            </div>
+        `;
+        initMarques();
+    } catch (e) { 
+        document.getElementById('loader').innerText = "❌ Erreur de chargement : " + e.message; 
     }
+}
 
     // --- NAVIGATION ---
     function changerPage(n) {
