@@ -148,66 +148,78 @@
                         marques.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
-    function majFamilles() {
+   function majFamilles() {
         const m = document.getElementById('u-marque').value;
         const sel = document.getElementById('u-type-cle');
-        const types = [...new Set(catalogue.filter(c => c.marque === m).map(c => c.type_cle))];
+        // Sécurité : on filtre et on enlève les valeurs vides
+        const types = [...new Set(catalogue
+            .filter(c => (c.marque || '').trim().toUpperCase() === m.trim().toUpperCase())
+            .map(c => (c.type_cle || '').trim())
+        )].filter(Boolean).sort();
+        
         sel.innerHTML = '<option value="">-- Type --</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
         sel.disabled = false;
+        // On réinitialise et désactive le menu suivant au cas où
+        document.getElementById('u-type-puce').innerHTML = '<option value="">-- Puce --</option>';
+        document.getElementById('u-type-puce').disabled = true;
+        document.getElementById('u-grille-container').classList.add('hidden');
     }
 
     function majPuces() {
         const m = document.getElementById('u-marque').value;
         const t = document.getElementById('u-type-cle').value;
         const sel = document.getElementById('u-type-puce');
-        const puces = [...new Set(catalogue.filter(c => c.marque === m && c.type_cle === t).map(c => c.type_puce))];
+        // Sécurité : on filtre et on enlève les valeurs vides
+        const puces = [...new Set(catalogue
+            .filter(c => (c.marque || '').trim().toUpperCase() === m.trim().toUpperCase() && (c.type_cle || '').trim() === t.trim())
+            .map(c => (c.type_puce || '').trim())
+        )].filter(Boolean).sort();
+        
         sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
         sel.disabled = false;
+        document.getElementById('u-grille-container').classList.add('hidden');
     }
 
     function majGrille() {
-    // 1. On récupère les valeurs sélectionnées par l'utilisateur (nettoyées et en MAJUSCULES)
-    const m = document.getElementById('u-marque').value.trim().toUpperCase();
-    const t = document.getElementById('u-type-cle').value.trim().toUpperCase();
-    const p = document.getElementById('u-type-puce').value.trim().toUpperCase();
+        const m = document.getElementById('u-marque').value.trim().toUpperCase();
+        const t = document.getElementById('u-type-cle').value.trim();
+        const p = document.getElementById('u-type-puce').value.trim();
 
-    console.log("Recherche de :", { marque: m, type: t, puce: p }); // Pour debug dans la console
+        // Si l'utilisateur n'a pas tout choisi, on ne fait rien
+        if(!m || !t || !p) return;
 
-    // 2. On filtre le catalogue en convertissant aussi le contenu du Sheet en MAJUSCULES
-    const liste = catalogue.filter(c => {
-        const marqueSheet = (c.marque || '').trim().toUpperCase();
-        const typeSheet = (c.type_cle || '').trim().toUpperCase();
-        const puceSheet = (c.type_puce || '').trim().toUpperCase();
+        // Filtrage ultra-souple pour éviter les bugs de casse ou d'espaces
+        const liste = catalogue.filter(c => {
+            const marqueSheet = (c.marque || '').trim().toUpperCase();
+            const typeSheet = (c.type_cle || '').trim();
+            const puceSheet = (c.type_puce || '').trim();
+            return marqueSheet === m && typeSheet === t && puceSheet === p;
+        });
         
-        return marqueSheet === m && typeSheet === t && puceSheet === p;
-    });
+        const grille = document.getElementById('grille-cles');
+        
+        if (liste.length === 0) {
+            grille.innerHTML = '<p style="color:red; text-align:center; padding:10px;">⚠️ Aucune clé trouvée pour cette sélection.</p>';
+            document.getElementById('u-grille-container').classList.remove('hidden');
+            return;
+        }
 
-    // 3. Si rien n'est trouvé, on affiche un message d'erreur clair au lieu d'un écran vide
-    if (liste.length === 0) {
-        document.getElementById('grille-cles').innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 20px;">
-                ⚠️ Aucune clé trouvée dans le catalogue pour cette combinaison exacte.
-            </div>`;
+        grille.innerHTML = liste.map(c => {
+            // Sécurité image manquante
+            const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
+            const prixDouble = c.prix ? c.prix + '€' : 'N/A';
+            const prixAkl = c.prix_akl ? c.prix_akl + '€' : 'N/A';
+            
+            return `
+                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+                    <img src="${imageSrc}">
+                    <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${prixDouble}</span></div>
+                    <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${prixAkl}</span></div>
+                </div>`;
+        }).join('');
+        
         document.getElementById('u-grille-container').classList.remove('hidden');
-        document.getElementById('btn-valider').style.display = 'none';
-        return;
     }
-
-    // 4. On génère la grille avec les images
-    document.getElementById('grille-cles').innerHTML = liste.map(c => {
-        // Sécurité si l'image est manquante dans la ligne du Sheet
-        const urlImage = c.image ? c.image : 'https://via.placeholder.com/150?text=Image+Manquante';
-        
-        return `
-            <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-                <img src="${urlImage}" alt="Clé">
-                <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${c.prix}€</span></div>
-                <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${c.prix_akl || 'N/A'}€</span></div>
-            </div>`;
-    }).join('');
-
-    document.getElementById('u-grille-container').classList.remove('hidden');
-}
     function selectionnerCle(id, el) {
         idChoisi = id;
         document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
