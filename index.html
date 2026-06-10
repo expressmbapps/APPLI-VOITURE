@@ -204,19 +204,24 @@
         }
 
         grille.innerHTML = liste.map(c => {
-            const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
-            const prixDouble = c.prix ? c.prix + '€' : 'N/A';
-            const prixAkl = c.prix_akl ? c.prix_akl + '€' : 'N/A';
-            
-            return `
-                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-                    <img src="${imageSrc}">
-                    <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${prixDouble}</span></div>
-                    <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${prixAkl}</span></div>
-                </div>`;
-        }).join('');
-        
-        document.getElementById('u-grille-container').classList.remove('hidden');
+    const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
+    const prixDouble = c.prix ? c.prix + '€' : 'N/A';
+    const prixAkl = c.prix_akl ? c.prix_akl + '€' : 'N/A';
+    // Ajout de la variable pour le commentaire
+    const commentaire = c.commentaire ? c.commentaire : 'Aucun commentaire';
+    
+    return `
+        <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
+            <img src="${imageSrc}">
+            <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${prixDouble}</span></div>
+            <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${prixAkl}</span></div>
+            <div class="comment-tag" style="font-size: 0.9em; margin-top: 5px; color: #666;">
+                <i>${commentaire}</i>
+            </div>
+        </div>`;
+}).join('');
+
+document.getElementById('u-grille-container').classList.remove('hidden');
     }
     function selectionnerCle(id, el) {
         idChoisi = id;
