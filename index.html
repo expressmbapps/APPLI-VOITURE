@@ -242,14 +242,27 @@ document.getElementById('u-grille-container').classList.remove('hidden');
     function ouvrirFormulaire() { majPrixRecap(); changerPage('formulaire'); }
 
     function envoyerWhatsApp() {
-        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
-        const mission = document.getElementById('f-mission').value;
-        const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
-        const tech = document.getElementById('f-tech').value;
-        const tel = (tech === "OLIVIER") ? "33749504047" : "33666824460";
-        const texte = `🚀 *MISSION - ${tech}*\n📍 *Type:* ${mission}\n👤 *Client:* ${document.getElementById('f-client').value}\n🚗 *Immat:* ${document.getElementById('f-immat').value}\n🔑 *Clé:* ${cle.marque} (${cle.type_cle})\n💰 *Prix:* ${prix}€\n🖼 *Photo:* ${cle.image}`;
-        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texte)}`, '_blank');
-    }
+    const cle = catalogue.find(c => String(c.id) === String(idChoisi));
+    const mission = document.getElementById('f-mission').value;
+    const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
+    const tech = document.getElementById('f-tech').value;
+    const tel = (tech === "OLIVIER") ? "3370000000" : "33600000000";
+    
+    // 1. Récupération de la note complémentaire (avec une valeur par défaut si vide)
+    const noteComplementaire = cle.commentaire ? cle.commentaire : "Aucune";
+
+    // 2. Ajout de la ligne *Notes:* dans le texte du message
+    const texte = `🚀 *MISSION - ${tech}*
+📍 *Type:* ${mission}
+👤 *Client:* ${document.getElementById('f-client').value}
+🚗 *Immat:* ${document.getElementById('f-immat').value}
+🔑 *Clé:* ${cle.marque} (${cle.type_cle})
+💰 *Prix:* ${prix}€
+📝 *Notes:* ${noteComplementaire}
+🖼 *Photo:* ${cle.image}`;
+
+    window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texte)}`, '_blank');
+}
 
     // --- ADMIN ---
     async function uploadPhoto(input) {
