@@ -131,8 +131,8 @@
 
 <script>
     // --- CONFIGURATION (METS TES URL ICI) ---
-    const SHEET_URL = "https://script.google."; 
-    const CLOUDINARY_URL = "https://api.cloudinary.";
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycby39clXy6A00F6Y1T3-868EjZUgxYV9B8oRVGoReKK86YN2r1yo52bLXj6V_y5MLjE/exec"; 
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
     const UPLOAD_PRESET = "CATALOGUE"; 
 
     let catalogue = [];
@@ -328,7 +328,7 @@
         const noteIntervention = document.getElementById('f-notes').value || "Aucune";
 
         const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
-        const telTech = (tech === "OLIVIER") ? "33700000000" : "33600000000";
+        const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
         const commentaireCle = cle.commentaire ? ` (${cle.commentaire})` : "";
 
         const texte = `🚀 *MISSION - ${tech}* \n\n` +
