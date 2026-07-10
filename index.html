@@ -155,33 +155,30 @@
         btnLogin.disabled = true;
         btnLogin.innerText = "⏳ Vérification...";
 
-        try {
-            // Envoi des identifiants au format texte brut pour éviter les erreurs CORS
-            const response = await fetch(SHEET_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({
-                    action: "login",
-                    email: email,
-                    code: code
-                })
-            });
+       try {
+        const response = await fetch(SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: "login",
+                email: email,
+                code: code
+            })
+        });
 
-            const textResponse = await response.text();
+        const textResponse = await response.text();
+        
+        // <<< COMPORTEMENT DE TEST >>>
+        // Enlève les deux barres // devant la ligne ci-dessous pour forcer l'entrée si tu es bloqué :
+        // textResponse = "OK"; 
 
-            if (textResponse.trim() === "OK") {
-                // Succès : On mémorise la session et on lance l'application
-                localStorage.setItem('express_mb_logged', 'true');
-                demarrerApplication();
-            } else {
-                errEl.innerText = "❌ Email ou code d'accès incorrect.";
-                errEl.classList.remove('hidden');
-                btnLogin.disabled = false;
-                btnLogin.innerText = "Se connecter";
-            }
-        } catch (error) {
-            console.error(error);
-            errEl.innerText = "❌ Impossible de joindre le serveur.";
+        alert("Réponse brute du serveur : " + textResponse); // Cela va nous dire ce que Google répond !
+
+        if (textResponse.trim() === "OK") {
+            localStorage.setItem('express_mb_logged', 'true');
+            demarrerApplication();
+        } else {
+            errEl.innerText = "❌ Le serveur a répondu : " + textResponse + " (Attendu: OK)";
             errEl.classList.remove('hidden');
             btnLogin.disabled = false;
             btnLogin.innerText = "Se connecter";
