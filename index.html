@@ -7,7 +7,34 @@
     <style>
         :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; --akl: #e67e22; }
         body { font-family: sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; }
+        
+        /* En-tête avec bouton de déconnexion intégré */
+        header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            position: relative;
+        }
+        header h1 { margin: 0; font-size: 24px; }
+        
+        /* Bouton déconnexion petit et positionné en haut à droite */
+        .btn-logout {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: #c0392b;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-logout:hover { background: #e74c3c; }
+
         nav { display: flex; justify-content: center; background: #ddd; padding: 10px; gap: 10px; position: sticky; top: 0; z-index: 100; }
         button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
         .btn-blue { background: var(--secondary); color: white; }
@@ -40,7 +67,10 @@
 </head>
 <body>
 
-<header><h1>🔑 EXPRESS MB</h1></header>
+<header>
+    <h1>🔑 EXPRESS MB</h1>
+    <button id="header-logout" class="btn-logout hidden" onclick="deconnexion()">❌ Déconnexion</button>
+</header>
 
 <div id="page-login" class="container">
     <div class="login-box">
@@ -57,7 +87,6 @@
     <nav>
         <button class="btn-blue" onclick="changerPage('user')">📱 COLLABORATEUR</button>
         <button class="btn-grey" onclick="accesAdmin()">⚙️ TECHNICIEN</button>
-        <button class="btn-grey" onclick="deconnexion()" style="background:#c0392b;">❌ DÉCONNEXION</button>
     </nav>
 
     <div class="container">
@@ -131,7 +160,7 @@
 
 <script>
     // --- CONFIGURATION ---
-    // ⚠️ METS TON LIEN GOOGLE APPS SCRIPT CI-DESSOUS (Il doit finir par /exec)
+    // ⚠️ METS TON LIEN GOOGLE APPS SCRIPT CI-DESSOUS
     const SHEET_URL = "https://script.google.com/macros/s/AKfycby39clXy6A00F6Y1T3-868EjZUgxYV9B8oRVGoReKK86YN2r1yo52bLXj6V_y5MLjE/exec"; 
     const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
     const UPLOAD_PRESET = "CATALOGUE"; 
@@ -140,10 +169,8 @@
     let idChoisi = null;
     let tempPhotoURL = null;
 
-    // --- FONCTION DE CONNEXION ROBUSTE (AVEC DIAGNOSTIC) ---
+    // --- CONNEXION ---
     async function verifierConnexion() {
-        alert("📢 [Diagnostic] : Le bouton de connexion fonctionne !");
-        
         const email = document.getElementById('l-email').value.trim();
         const code = document.getElementById('l-code').value.trim();
         const errEl = document.getElementById('login-error');
@@ -159,20 +186,13 @@
         btnLogin.innerText = "⏳ Vérification...";
 
         try {
-            // Requête optimisée pour éviter les conflits de sécurité CORS
             const response = await fetch(SHEET_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({
-                    action: "login",
-                    email: email,
-                    code: code
-                })
+                body: JSON.stringify({ action: "login", email: email, code: code })
             });
 
             const textResponse = await response.text();
-            
-            alert("📢 [Diagnostic] Réponse brute de Google Sheets : " + textResponse);
 
             if (textResponse.trim() === "OK" || textResponse.trim() === "Success") {
                 localStorage.setItem('express_mb_logged', 'true');
@@ -184,7 +204,6 @@
                 btnLogin.innerText = "Se connecter";
             }
         } catch (error) {
-            alert("💥 Erreur réseau critique : " + error);
             errEl.innerText = "❌ Impossible de joindre le serveur.";
             errEl.classList.remove('hidden');
             btnLogin.disabled = false;
@@ -195,6 +214,7 @@
     function demarrerApplication() {
         document.getElementById('page-login').classList.add('hidden');
         document.getElementById('app-global-content').classList.remove('hidden');
+        document.getElementById('header-logout').classList.remove('hidden'); // Affiche le petit bouton déconnexion
         chargerDonnees();
     }
 
@@ -203,7 +223,7 @@
         location.reload();
     }
 
-    // --- CHARGEMENT DES DONNÉES ---
+    // --- CHARGEMENT ---
     async function chargerDonnees() {
         try {
             const response = await fetch(SHEET_URL);
@@ -286,18 +306,12 @@
 
         grille.innerHTML = liste.map(c => {
             const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
-            const prixDouble = c.prix ? c.prix + '€' : 'N/A';
-            const prixAkl = c.prix_akl ? c.prix_akl + '€' : 'N/A';
-            const commentaire = c.commentaire ? c.commentaire : 'Aucun commentaire';
-            
             return `
                 <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
                     <img src="${imageSrc}">
-                    <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${prixDouble}</span></div>
-                    <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${prixAkl}</span></div>
-                    <div class="comment-tag" style="font-size: 0.9em; margin-top: 5px; color: #666;">
-                        <i>${commentaire}</i>
-                    </div>
+                    <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${c.prix || 'N/A'}€</span></div>
+                    <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${c.prix_akl || 'N/A'}€</span></div>
+                    <div style="font-size: 0.9em; margin-top: 5px; color: #666;"><i>${c.commentaire || ''}</i></div>
                 </div>`;
         }).join('');
 
@@ -311,7 +325,6 @@
         document.getElementById('btn-valider').style.display = 'block';
     }
 
-    // --- EXPORT WHATSAPP ---
     function majPrixRecap() {
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         if(!cle) return;
@@ -333,22 +346,21 @@
 
         const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
         const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
-        const commentaireCle = cle.commentaire ? ` (${cle.commentaire})` : "";
 
         const texte = `🚀 *MISSION - ${tech}* \n\n` +
                       `📍 *Type:* ${mission}\n` +
                       `👤 *Client:* ${client}\n` +
                       `🚗 *Immat:* ${immat}\n` +
                       `📱 *Tel:* ${telClient}\n\n` +
-                      `🔑 *Clé:* ${cle.marque} ${cle.type_cle || cle.desc}${commentaireCle}\n` +
+                      `🔑 *Clé:* ${cle.marque} ${cle.type_cle}\n` +
                       `💰 *Prix:* ${prix}€\n` +
-                      `📝 *Lieu Interv:* ${noteIntervention}\n\n` +
+                      `📝 *Lieu:* ${noteIntervention}\n\n` +
                       `🖼 *Photo:* ${cle.image}`;
 
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
     }
 
-    // --- ZONE TECHNICIEN (ADMIN) ---
+    // --- ZONE ADMIN ---
     async function uploadPhoto(input) {
         const file = input.files[0]; if(!file) return;
         document.getElementById('upload-status').innerText = "⏳ Envoi...";
@@ -363,8 +375,7 @@
     async function ajouterCleGoogle() {
         const btn = document.getElementById('btn-save');
         const idExistante = document.getElementById('a-id').value;
-        btn.disabled = true;
-        btn.innerText = "⏳ Enregistrement...";
+        btn.disabled = true; btn.innerText = "⏳ Enregistrement...";
 
         const data = {
             action: idExistante ? "update" : "add",
@@ -379,14 +390,11 @@
         };
 
         await fetch(SHEET_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(data)});
-        alert("Enregistré avec succès !");
-        location.reload();
+        alert("Enregistré !"); location.reload();
     }
 
     function preparerModification(id) {
-        const cle = catalogue.find(c => String(c.id) === String(id));
-        if(!cle) return;
-
+        const cle = catalogue.find(c => String(c.id) === String(id)); if(!cle) return;
         document.getElementById('admin-form-title').innerText = "✏️ Modifier " + cle.marque;
         document.getElementById('a-id').value = cle.id;
         document.getElementById('a-marque').value = cle.marque;
@@ -396,7 +404,6 @@
         document.getElementById('a-prix-akl').value = cle.prix_akl;
         document.getElementById('a-comm').value = cle.commentaire;
         tempPhotoURL = cle.image;
-        
         document.getElementById('btn-save').innerText = "METTRE À JOUR";
         document.getElementById('btn-cancel-edit').classList.remove('hidden');
         window.scrollTo({top: 0, behavior: 'smooth'});
@@ -404,15 +411,13 @@
 
     function resetAdminForm() {
         document.getElementById('admin-form-title').innerText = "Ajouter au Catalogue";
-        document.getElementById('a-id').value = "";
-        document.getElementById('btn-save').innerText = "ENREGISTRER";
-        document.getElementById('btn-cancel-edit').classList.add('hidden');
-        document.getElementById('a-marque').value = "";
+        document.getElementById('a-id').value = ""; document.getElementById('btn-save').innerText = "ENREGISTRER";
+        document.getElementById('btn-cancel-edit').classList.add('hidden'); document.getElementById('a-marque').value = "";
         tempPhotoURL = null;
     }
 
     async function supprimer(id) {
-        if(!confirm("Supprimer cette clé définitivement ?")) return;
+        if(!confirm("Supprimer cette clé ?")) return;
         await fetch(SHEET_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action:"delete", id:id})});
         location.reload();
     }
@@ -429,7 +434,6 @@
             </tr>`).join('') + '</table>';
     }
 
-    // Lancement de l'application si l'utilisateur s'est déjà connecté
     window.onload = function() {
         if (localStorage.getItem('express_mb_logged') === 'true') {
             demarrerApplication();
