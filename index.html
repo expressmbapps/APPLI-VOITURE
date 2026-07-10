@@ -131,7 +131,8 @@
 
 <script>
     // --- CONFIGURATION ---
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycby39clXy6A00F6Y1T3-868EjZUgxYV9B8oRVGoReKK86YN2r1yo52bLXj6V_y5MLjE/exec"; // <-- REMPLACE PAR TON URL /exec
+    // ⚠️ METS TON LIEN GOOGLE APPS SCRIPT CI-DESSOUS (Il doit finir par /exec)
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycby39clXy6A00F6Y1T3-868EjZUgxYV9B8oRVGoReKK86YN2r1yo52bLXj6V_y5MLjE/exec"; 
     const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
     const UPLOAD_PRESET = "CATALOGUE"; 
 
@@ -139,15 +140,17 @@
     let idChoisi = null;
     let tempPhotoURL = null;
 
-    // --- FONCTION DE SÉCURITÉ ET CONNEXION ---
+    // --- FONCTION DE CONNEXION ROBUSTE (AVEC DIAGNOSTIC) ---
     async function verifierConnexion() {
+        alert("📢 [Diagnostic] : Le bouton de connexion fonctionne !");
+        
         const email = document.getElementById('l-email').value.trim();
         const code = document.getElementById('l-code').value.trim();
         const errEl = document.getElementById('login-error');
         const btnLogin = document.getElementById('btn-login');
 
         if(!email || !code) {
-            alert("Veuillez remplir les deux cases.");
+            alert("⚠️ Erreur : L'email ou le code est vide.");
             return;
         }
 
@@ -155,30 +158,34 @@
         btnLogin.disabled = true;
         btnLogin.innerText = "⏳ Vérification...";
 
-       try {
-        const response = await fetch(SHEET_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: "login",
-                email: email,
-                code: code
-            })
-        });
+        try {
+            // Requête optimisée pour éviter les conflits de sécurité CORS
+            const response = await fetch(SHEET_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: "login",
+                    email: email,
+                    code: code
+                })
+            });
 
-        const textResponse = await response.text();
-        
-        // <<< COMPORTEMENT DE TEST >>>
-        // Enlève les deux barres // devant la ligne ci-dessous pour forcer l'entrée si tu es bloqué :
-        // textResponse = "OK"; 
+            const textResponse = await response.text();
+            
+            alert("📢 [Diagnostic] Réponse brute de Google Sheets : " + textResponse);
 
-        alert("Réponse brute du serveur : " + textResponse); // Cela va nous dire ce que Google répond !
-
-        if (textResponse.trim() === "OK") {
-            localStorage.setItem('express_mb_logged', 'true');
-            demarrerApplication();
-        } else {
-            errEl.innerText = "❌ Le serveur a répondu : " + textResponse + " (Attendu: OK)";
+            if (textResponse.trim() === "OK") {
+                localStorage.setItem('express_mb_logged', 'true');
+                demarrerApplication();
+            } else {
+                errEl.innerText = "❌ Email ou code d'accès incorrect.";
+                errEl.classList.remove('hidden');
+                btnLogin.disabled = false;
+                btnLogin.innerText = "Se connecter";
+            }
+        } catch (error) {
+            alert("💥 Erreur réseau critique : " + error);
+            errEl.innerText = "❌ Impossible de joindre le serveur.";
             errEl.classList.remove('hidden');
             btnLogin.disabled = false;
             btnLogin.innerText = "Se connecter";
@@ -196,7 +203,7 @@
         location.reload();
     }
 
-    // --- CHARGEMENT ---
+    // --- CHARGEMENT DES DONNÉES ---
     async function chargerDonnees() {
         try {
             const response = await fetch(SHEET_URL);
@@ -304,7 +311,7 @@
         document.getElementById('btn-valider').style.display = 'block';
     }
 
-    // --- FORMULAIRE D'INTERVENTION ---
+    // --- EXPORT WHATSAPP ---
     function majPrixRecap() {
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         if(!cle) return;
@@ -341,7 +348,7 @@
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
     }
 
-    // --- ZONE ADMIN ---
+    // --- ZONE TECHNICIEN (ADMIN) ---
     async function uploadPhoto(input) {
         const file = input.files[0]; if(!file) return;
         document.getElementById('upload-status').innerText = "⏳ Envoi...";
@@ -422,7 +429,7 @@
             </tr>`).join('') + '</table>';
     }
 
-    // Gestion de l'affichage automatique au démarrage
+    // Lancement de l'application si l'utilisateur s'est déjà connecté
     window.onload = function() {
         if (localStorage.getItem('express_mb_logged') === 'true') {
             demarrerApplication();
