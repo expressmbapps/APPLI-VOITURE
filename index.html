@@ -19,11 +19,11 @@
         .action-btn { width: 100%; background: var(--success); color: white; padding: 15px; font-size: 18px; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer; }
         .btn-whatsapp { background: var(--whatsapp); color: white; }
         
-        /* Style spécifique de la boîte de connexion */
+        /* Fenêtre de connexion */
         .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; margin-top: 50px; }
         .error { color: var(--danger); font-weight: bold; margin-top: 10px; }
 
-        /* Grille des clés améliorée */
+        /* Grille des clés */
         .key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
         .key-item { border: 2px solid #eee; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; background: white; position: relative; transition: 0.2s; }
         .key-item:hover { border-color: var(--secondary); }
@@ -45,9 +45,9 @@
 <div id="page-login" class="container">
     <div class="login-box">
         <h2>🔒 Accès Restreint</h2>
-        <p>Veuillez vous identifier pour accéder au catalogue.</p>
+        <p>Identifiez-vous pour ouvrir le catalogue EXPRESS MB.</p>
         <input type="email" id="l-email" placeholder="Votre adresse email" required>
-        <input type="password" id="l-code" placeholder="Votre code secret personnalisé" required>
+        <input type="password" id="l-code" placeholder="Votre code secret" required>
         <button class="action-btn" id="btn-login" onclick="verifierConnexion()">Se connecter</button>
         <p id="login-error" class="error hidden"></p>
     </div>
@@ -57,7 +57,7 @@
     <nav>
         <button class="btn-blue" onclick="changerPage('user')">📱 COLLABORATEUR</button>
         <button class="btn-grey" onclick="accesAdmin()">⚙️ TECHNICIEN</button>
-        <button class="btn-grey" onclick="deconnexion()" style="background:#c0392b;">❌ QUITTER</button>
+        <button class="btn-grey" onclick="deconnexion()" style="background:#c0392b;">❌ DÉCONNEXION</button>
     </nav>
 
     <div class="container">
@@ -130,8 +130,8 @@
 </div>
 
 <script>
-    // --- CONFIGURATION (METS TES URL ICI) ---
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycby39clXy6A00F6Y1T3-868EjZUgxYV9B8oRVGoReKK86YN2r1yo52bLXj6V_y5MLjE/exec"; 
+    // --- CONFIGURATION ---
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycby39clXy6A00F6Y1T3-868EjZUgxYV9B8oRVGoReKK86YN2r1yo52bLXj6V_y5MLjE/exec"; // <-- REMPLACE PAR TON URL /exec
     const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
     const UPLOAD_PRESET = "CATALOGUE"; 
 
@@ -139,59 +139,27 @@
     let idChoisi = null;
     let tempPhotoURL = null;
 
-    // --- NOUVEAU : SYSTÈME DE VÉRIFICATION DE CONNEXION ---
-   async function verifierConnexion() {
-    const email = document.getElementById('l-email').value.trim();
-    const code = document.getElementById('l-code').value.trim();
-    const errEl = document.getElementById('login-error');
-    const btnLogin = document.getElementById('btn-login');
+    // --- FONCTION DE SÉCURITÉ ET CONNEXION ---
+    async function verifierConnexion() {
+        const email = document.getElementById('l-email').value.trim();
+        const code = document.getElementById('l-code').value.trim();
+        const errEl = document.getElementById('login-error');
+        const btnLogin = document.getElementById('btn-login');
 
-    if(!email || !code) {
-        alert("Veuillez remplir tous les champs.");
-        return;
-    }
-
-    errEl.classList.add('hidden');
-    btnLogin.disabled = true;
-    btnLogin.innerText = "⏳ Vérification...";
-
-    try {
-        // Envoi simplifié compatible avec les redirections Google Apps Script
-        const response = await fetch(SHEET_URL, {
-            method: 'POST',
-            mode: 'cors', // On force le mode CORS
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8', // Ruse pour éviter le blocage CORS
-            },
-            body: JSON.stringify({
-                action: "login",
-                email: email,
-                code: code
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.autorise === true) {
-            localStorage.setItem('express_mb_logged', 'true');
-            demarrerApplication();
-        } else {
-            errEl.innerText = "❌ Email ou code d'accès incorrect.";
-            errEl.classList.remove('hidden');
-            btnLogin.disabled = false;
-            btnLogin.innerText = "Se connecter";
+        if(!email || !code) {
+            alert("Veuillez remplir les deux cases.");
+            return;
         }
-    } catch (error) {
-        console.error(error);
-        errEl.innerText = "❌ Erreur de liaison avec le serveur de sécurité.";
-        errEl.classList.remove('hidden');
-        btnLogin.disabled = false;
-        btnLogin.innerText = "Se connecter";
-    }
-}
-            // Requête vers ton script Google combiné avec action: "login"
+
+        errEl.classList.add('hidden');
+        btnLogin.disabled = true;
+        btnLogin.innerText = "⏳ Vérification...";
+
+        try {
+            // Envoi des identifiants au format texte brut pour éviter les erreurs CORS
             const response = await fetch(SHEET_URL, {
                 method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({
                     action: "login",
                     email: email,
@@ -199,10 +167,10 @@
                 })
             });
 
-            const result = await response.json();
+            const textResponse = await response.text();
 
-            if (result.autorise === true) {
-                // Sauvegarde de la session pour éviter de se reconnecter à chaque F5
+            if (textResponse.trim() === "OK") {
+                // Succès : On mémorise la session et on lance l'application
                 localStorage.setItem('express_mb_logged', 'true');
                 demarrerApplication();
             } else {
@@ -213,7 +181,7 @@
             }
         } catch (error) {
             console.error(error);
-            errEl.innerText = "❌ Erreur de liaison avec le serveur de sécurité.";
+            errEl.innerText = "❌ Impossible de joindre le serveur.";
             errEl.classList.remove('hidden');
             btnLogin.disabled = false;
             btnLogin.innerText = "Se connecter";
@@ -239,7 +207,7 @@
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('page-user').classList.remove('hidden');
             initMarques();
-        } catch (e) { document.getElementById('loader').innerText = "❌ Erreur de chargement"; }
+        } catch (e) { document.getElementById('loader').innerText = "❌ Erreur de chargement du catalogue"; }
     }
 
     // --- NAVIGATION ---
@@ -248,9 +216,9 @@
         document.getElementById('page-'+n).classList.remove('hidden');
         if(n === 'admin') initTableAdmin();
     }
-    function accesAdmin() { if(prompt("Code:") === "1234") changerPage('admin'); }
+    function accesAdmin() { if(prompt("Code Technicien:") === "1234") changerPage('admin'); }
 
-    // --- LOGIQUE CLIENT ---
+    // --- LOGIQUE CATALOGUE ---
     function initMarques() {
         const sel = document.getElementById('u-marque');
         const marques = [...new Set(catalogue.map(c => c.marque.trim().toUpperCase()))].sort();
@@ -307,7 +275,7 @@
         const grille = document.getElementById('grille-cles');
         
         if (liste.length === 0) {
-            grille.innerHTML = '<p style="color:var(--danger); text-align:center; padding:10px; grid-column:1/-1;">⚠️ Aucune clé correspondante trouvée.</p>';
+            grille.innerHTML = '<p style="color:var(--danger); text-align:center; padding:10px; grid-column:1/-1;">⚠️ Aucune clé trouvée.</p>';
             document.getElementById('u-grille-container').classList.remove('hidden');
             return;
         }
@@ -339,16 +307,15 @@
         document.getElementById('btn-valider').style.display = 'block';
     }
 
-    // --- FORMULAIRE ET WHATSAPP ---
+    // --- FORMULAIRE D'INTERVENTION ---
     function majPrixRecap() {
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         if(!cle) return;
         const typeMission = document.getElementById('f-mission').value;
         const prix = typeMission === "PERTE TOTALE" ? (cle.prix_akl || "Sur devis") : cle.prix;
-        document.getElementById('recap-cle').innerHTML = `<b>${cle.marque}</b> - ${cle.type_cle}<br>Puce: ${cle.type_puce}<br>Tarif sélectionné: <b>${prix}€</b>`;
+        document.getElementById('recap-cle').innerHTML = `<b>${cle.marque}</b> - ${cle.type_cle}<br>Puce: ${cle.type_puce}<br>Tarif: <b>${prix}€</b>`;
     }
 
-    function abrirFormulaire() { majPrixRecap(); changerPage('formulaire'); }
     function ouvrirFormulaire() { majPrixRecap(); changerPage('formulaire'); }
 
     function envoyerWhatsApp() {
@@ -377,7 +344,7 @@
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
     }
 
-    // --- ADMIN ---
+    // --- ZONE ADMIN ---
     async function uploadPhoto(input) {
         const file = input.files[0]; if(!file) return;
         document.getElementById('upload-status').innerText = "⏳ Envoi...";
@@ -386,7 +353,7 @@
             const res = await fetch(CLOUDINARY_URL, { method:'POST', body:fd }).then(r => r.json());
             tempPhotoURL = res.secure_url;
             document.getElementById('upload-status').innerText = "✅ OK";
-        } catch(e) { alert("Erreur upload photo"); }
+        } catch(e) { alert("Erreur photo Cloudinary"); }
     }
 
     async function ajouterCleGoogle() {
@@ -407,8 +374,8 @@
             image: tempPhotoURL
         };
 
-        await fetch(SHEET_URL, { method:'POST', mode:'no-cors', body: JSON.stringify(data)});
-        alert("Action réussie !");
+        await fetch(SHEET_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(data)});
+        alert("Enregistré avec succès !");
         location.reload();
     }
 
@@ -441,8 +408,8 @@
     }
 
     async function supprimer(id) {
-        if(!confirm("Supprimer définitivement cette clé ?")) return;
-        await fetch(SHEET_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({action:"delete", id:id})});
+        if(!confirm("Supprimer cette clé définitivement ?")) return;
+        await fetch(SHEET_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action:"delete", id:id})});
         location.reload();
     }
 
@@ -458,13 +425,11 @@
             </tr>`).join('') + '</table>';
     }
 
-    // Déclenchement automatique au chargement
+    // Gestion de l'affichage automatique au démarrage
     window.onload = function() {
-        // Si l'utilisateur s'est déjà connecté auparavant
         if (localStorage.getItem('express_mb_logged') === 'true') {
             demarrerApplication();
         }
-        // Sinon, il reste bloqué sur l'écran de connexion par défaut
     };
 </script>
 </body>
