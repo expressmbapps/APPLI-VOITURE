@@ -132,7 +132,15 @@
                 <input type="text" id="f-client" placeholder="Nom du Client">
                 <input type="text" id="f-immat" placeholder="Immatriculation">
                 <input type="text" id="f-tel" placeholder="Téléphone client">
-                <textarea id="f-notes" rows="3" placeholder="lieu de l'intervention"></textarea>
+                
+                <!-- Champs date et heure de rendez-vous ajoutés -->
+                <label for="f-date" style="font-size: 14px; font-weight: bold; color: #555;">Date de rendez-vous souhaitée :</label>
+                <input type="date" id="f-date">
+
+                <label for="f-heure" style="font-size: 14px; font-weight: bold; color: #555;">Heure de rendez-vous souhaitée :</label>
+                <input type="time" id="f-heure">
+
+                <textarea id="f-notes" rows="3" placeholder="Lieu de l'intervention"></textarea>
                 
                 <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER AU TECH</button>
             </div>
@@ -168,7 +176,6 @@
 
 <script>
     // --- CONFIGURATION ---
-    // ⚠️ METS TON LIEN GOOGLE APPS SCRIPT CI-DESSOUS
     const SHEET_URL = "https://script.google.com/macros/s/AKfycbxjmebaW-2Ac_m8z_4AAp_sCVdA6D6ParJjjtRj8mJRCX0dobeh-ddIcR8k6tku1aBV/exec"; 
     const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
     const UPLOAD_PRESET = "CATALOGUE"; 
@@ -222,7 +229,7 @@
     function demarrerApplication() {
         document.getElementById('page-login').classList.add('hidden');
         document.getElementById('app-global-content').classList.remove('hidden');
-        document.getElementById('top-bar-container').classList.remove('hidden'); // Affichage de la micro-barre
+        document.getElementById('top-bar-container').classList.remove('hidden');
         chargerDonnees();
     }
 
@@ -350,20 +357,24 @@
         const client = document.getElementById('f-client').value;
         const immat = document.getElementById('f-immat').value;
         const telClient = document.getElementById('f-tel').value;
+        const dateRdv = document.getElementById('f-date').value;
+        const heureRdv = document.getElementById('f-heure').value;
         const noteIntervention = document.getElementById('f-notes').value || "Aucune";
 
         const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
         const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
 
         const texte = `🚀 *MISSION - ${tech}* \n\n` +
-                      `📍 *Type:* ${mission}\n` +
-                      `👤 *Client:* ${client}\n` +
-                      `🚗 *Immat:* ${immat}\n` +
-                      `📱 *Tel:* ${telClient}\n\n` +
-                      `🔑 *Clé:* ${cle.marque} ${cle.type_cle}\n` +
-                      `💰 *Prix:* ${prix}€\n` +
-                      `📝 *Lieu:* ${noteIntervention}\n\n` +
-                      `🖼 *Photo:* ${cle.image}`;
+                    `📍 *Type:* ${mission}\n` +
+                    `👤 *Client:* ${client}\n` +
+                    `🚗 *Immat:* ${immat}\n` +
+                    `📱 *Tel:* ${telClient}\n` +
+                    `📅 *Date RDV:* ${dateRdv || 'Non spécifiée'}\n` +
+                    `⏰ *Heure RDV:* ${heureRdv || 'Non spécifiée'}\n\n` +
+                    `🔑 *Clé:* ${cle.marque} ${cle.type_cle}\n` +
+                    `💰 *Prix:* ${prix}€\n` +
+                    `📝 *Lieu:* ${noteIntervention}\n\n` +
+                    `🖼 *Photo:* ${cle.image}`;
 
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
     }
