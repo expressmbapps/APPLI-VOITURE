@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EXPRESS MB - Catalogue Cloud</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; --akl: #e67e22; --google: #4285F4; }
+        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; --whatsapp: #25D366; --akl: #e67e22; }
         body { font-family: sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
         
         /* Zone technique au-dessus du titre pour le bouton déconnexion */
@@ -49,8 +49,7 @@
         .hidden { display: none !important; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
         .action-btn { width: 100%; background: var(--success); color: white; padding: 15px; font-size: 18px; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer; }
-        .btn-whatsapp { background: var(--whatsapp); color: white; }
-        .btn-calendar { background: var(--google); color: white; }
+        .btn-main-action { background: #2980b9; color: white; }
         
         /* Fenêtre de connexion */
         .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; margin-top: 50px; }
@@ -148,9 +147,8 @@
 
                 <textarea id="f-notes" rows="3" placeholder="Lieu de l'intervention"></textarea>
                 
-                <!-- Boutons d'action -->
-                <button class="action-btn btn-whatsapp" onclick="envoyerWhatsApp()">📲 ENVOYER AU TECH (WHATSAPP)</button>
-                <button class="action-btn btn-calendar" onclick="ajouterAgenda()">📅 AJOUTER À GOOGLE AGENDA</button>
+                <!-- Bouton unique fusionnant l'agenda et WhatsApp -->
+                <button class="action-btn btn-main-action" onclick="validerEtEnvoyerTout()">🚀 VALIDER, AJOUTER À L'AGENDA & ENVOYER</button>
             </div>
         </div>
 
@@ -187,9 +185,6 @@
     const SHEET_URL = "https://script.google.com/macros/s/AKfycbxjmebaW-2Ac_m8z_4AAp_sCVdA6D6ParJjjtRj8mJRCX0dobeh-ddIcR8k6tku1aBV/exec"; 
     const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
     const UPLOAD_PRESET = "CATALOGUE"; 
-
-    // ⚠️ METS ICI L'ID/EMAIL DE TON AGENDA GOOGLE SPÉCIFIQUE (laisse vide "" si tu veux l'agenda principal par défaut)
-    const GOOGLE_CALENDAR_ID = "agenda.prog.emb@gmail.com"; 
 
     let catalogue = [];
     let idChoisi = null;
@@ -361,7 +356,8 @@
 
     function ouvrirFormulaire() { majPrixRecap(); changerPage('formulaire'); }
 
-    function envoyerWhatsApp() {
+    // Fonction unique combinant l'ajout à l'agenda et l'envoi WhatsApp en un seul clic
+    async function validerEtEnvoyerTout() {
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         const mission = document.getElementById('f-mission').value;
         const tech = document.getElementById('f-tech').value;
@@ -372,6 +368,47 @@
         const heureRdv = document.getElementById('f-heure').value;
         const noteIntervention = document.getElementById('f-notes').value || "Aucune";
 
+        if (!dateRdv || !heureRdv) {
+            alert("⚠️ Veuillez renseigner la date et l'heure du rendez-vous.");
+            return;
+        }
+
+        const btnMain = document.querySelector('.btn-main-action');
+        btnMain.disabled = true;
+        btnMain.innerText = "⏳ Traitement en cours...";
+
+        // 1. Enregistrement automatique dans l'agenda via Apps Script en arrière-plan
+        const payload = {
+            action: "add_calendar",
+            tech: tech,
+            mission: mission,
+            client: client,
+            immat: immat,
+            tel: telClient,
+            date: dateRdv,
+            heure: heureRdv,
+            lieu: noteIntervention
+        };
+
+        try {
+            const response = await fetch(SHEET_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.text();
+
+            if (result.trim() !== "OK") {
+                alert("⚠️ Erreur lors de l'ajout à l'agenda : " + result);
+            }
+        } catch (error) {
+            console.error("Erreur réseau agenda:", error);
+        } finally {
+            btnMain.disabled = false;
+            btnMain.innerText = "🚀 VALIDER, AJOUTER À L'AGENDA & ENVOYER";
+        }
+
+        // 2. Ouverture immédiate de WhatsApp pour prévenir le technicien
         const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
         const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
 
@@ -380,56 +417,14 @@
                     `👤 *Client:* ${client}\n` +
                     `🚗 *Immat:* ${immat}\n` +
                     `📱 *Tel:* ${telClient}\n` +
-                    `📅 *Date RDV:* ${dateRdv || 'Non spécifiée'}\n` +
-                    `⏰ *Heure RDV:* ${heureRdv || 'Non spécifiée'}\n\n` +
+                    `📅 *Date RDV:* ${dateRdv}\n` +
+                    `⏰ *Heure RDV:* ${heureRdv}\n\n` +
                     `🔑 *Clé:* ${cle.marque} ${cle.type_cle}\n` +
                     `💰 *Prix:* ${prix}€\n` +
                     `📝 *Lieu:* ${noteIntervention}\n\n` +
                     `🖼 *Photo:* ${cle.image}`;
 
         window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
-    }
-
-    // Fonction pour générer et ouvrir l'événement Google Agenda (avec support d'agenda partagé)
-    function ajouterAgenda() {
-        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
-        const mission = document.getElementById('f-mission').value;
-        const tech = document.getElementById('f-tech').value;
-        const client = document.getElementById('f-client').value;
-        const immat = document.getElementById('f-immat').value;
-        const telClient = document.getElementById('f-tel').value;
-        const dateRdv = document.getElementById('f-date').value;
-        const heureRdv = document.getElementById('f-heure').value;
-        const noteIntervention = document.getElementById('f-notes').value || "Aucun lieu précisé";
-
-        if (!dateRdv || !heureRdv) {
-            alert("⚠️ Veuillez renseigner la date et l'heure du rendez-vous pour l'ajouter à l'agenda.");
-            return;
-        }
-
-        // Formatage de la date pour Google Calendar (YYYYMMDDTHHMMSS)
-        const dateClean = dateRdv.replace(/-/g, '');
-        const heureClean = heureRdv.replace(':', '') + '00';
-        const startDateTime = `${dateClean}T${heureClean}`;
-
-        // Calcul d'une durée estimée d'1 heure pour la fin de l'événement
-        let [h, m] = heureRdv.split(':').map(Number);
-        h = (h + 1) % 24;
-        const heureFinClean = String(h).padStart(2, '0') + String(m).padStart(2, '0') + '00';
-        const endDateTime = `${dateClean}T${heureFinClean}`;
-
-        // Titre et détails enrichis
-        const titre = `Intervention ${tech}: ${mission} - ${client} (${immat})`;
-        const details = `Technicien: ${tech}\nClient: ${client}\nTél: ${telClient}\nImmat: ${immat}\nClé: ${cle ? cle.marque + ' ' + cle.type_cle : ''}\nPrix: ${mission === "PERTE TOTALE" ? cle.prix_akl : cle.prix}€`;
-        
-        let googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titre)}&dates=${startDateTime}/${endDateTime}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(noteIntervention)}`;
-
-        // Si un ID d'agenda spécifique est renseigné, on l'ajoute au lien
-        if (GOOGLE_CALENDAR_ID.trim() !== "") {
-            googleCalendarUrl += `&src=${encodeURIComponent(GOOGLE_CALENDAR_ID.trim())}`;
-        }
-
-        window.open(googleCalendarUrl, '_blank');
     }
 
     // --- ZONE ADMIN ---
