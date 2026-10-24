@@ -133,12 +133,17 @@
                 <input type="text" id="f-immat" placeholder="Immatriculation">
                 <input type="text" id="f-tel" placeholder="Téléphone client">
                 
-                <!-- Champs date et heure de rendez-vous ajoutés -->
-                <label for="f-date" style="font-size: 14px; font-weight: bold; color: #555;">Date de rendez-vous souhaitée :</label>
-                <input type="date" id="f-date">
-
-                <label for="f-heure" style="font-size: 14px; font-weight: bold; color: #555;">Heure de rendez-vous souhaitée :</label>
-                <input type="time" id="f-heure">
+                <!-- Champs date et heure côte à côte avec un affichage optimisé -->
+                <div style="display: flex; gap: 10px; margin: 10px 0;">
+                    <div style="flex: 1;">
+                        <label for="f-date" style="font-size: 13px; font-weight: bold; color: #333;">📅 Date RDV :</label>
+                        <input type="date" id="f-date">
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="f-heure" style="font-size: 13px; font-weight: bold; color: #333;">⏰ Heure RDV :</label>
+                        <input type="time" id="f-heure">
+                    </div>
+                </div>
 
                 <textarea id="f-notes" rows="3" placeholder="Lieu de l'intervention"></textarea>
                 
