@@ -120,10 +120,28 @@
                 <h2>Fiche d'intervention</h2>
                 <div id="recap-cle" class="recap"></div>
                 
+                <!-- Sélection du technicien existant -->
                 <select id="f-tech">
                     <option value="OLIVIER">Technicien: OLIVIER</option>
                     <option value="FRANCK">Technicien: FRANCK</option>
                 </select>
+
+                <!-- NOUVEAU : Sélection parmi 10 collaborateurs -->
+                <label for="f-collab" style="font-size: 13px; font-weight: bold; color: #333; margin-top: 10px; display: block;">👥 Dossier pris par (Collaborateur) :</label>
+                <select id="f-collab">
+                    <option value="">-- Choisir le collaborateur --</option>
+                    <option value="OLIVIER">Nom 1</option>
+                    <option value="FRANCK">Nom 2</option>
+                    <option value="HICHEM">Nom 3</option>
+                    <option value="ABDENOUR">Nom 4</option>
+                    <option value="YVES">Nom 5</option>
+                    <option value="BRICE">Nom 6</option>
+                    <option value="DAVID BES">Nom 7</option>
+                    <option value="DAVID PERIS">Nom 8</option>
+                    <option value="YLIAN">Nom 9</option>
+                    <option value="Nom 10">Nom 10</option>
+                </select>
+
                 <select id="f-mission" onchange="majPrixRecap()">
                     <option value="DOUBLE DE CLÉ">Double de clé</option>
                     <option value="PERTE TOTALE">Perte totale (AKL)</option>
@@ -361,6 +379,7 @@
         const cle = catalogue.find(c => String(c.id) === String(idChoisi));
         const mission = document.getElementById('f-mission').value;
         const tech = document.getElementById('f-tech').value;
+        const collab = document.getElementById('f-collab').value; // Récupération du collaborateur sélectionné
         const client = document.getElementById('f-client').value;
         const immat = document.getElementById('f-immat').value;
         const telClient = document.getElementById('f-tel').value;
@@ -381,6 +400,7 @@
         const payload = {
             action: "add_calendar",
             tech: tech,
+            collab: collab,
             mission: mission,
             client: client,
             immat: immat,
@@ -410,9 +430,10 @@
 
         // 2. Ouverture immédiate de WhatsApp pour prévenir le technicien
         const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
-        const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
+        const telTech = (tech === "OLIVIER") ? "33749504047" : "336666824460";
 
         const texte = `🚀 *MISSION - ${tech}* \n\n` +
+                    `👥 *Pris en charge par:* ${collab || 'Non spécifié'}\n` +
                     `📍 *Type:* ${mission}\n` +
                     `👤 *Client:* ${client}\n` +
                     `🚗 *Immat:* ${immat}\n` +
