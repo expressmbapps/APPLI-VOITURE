@@ -120,25 +120,25 @@
                 <h2>Fiche d'intervention</h2>
                 <div id="recap-cle" class="recap"></div>
                 
-                <!-- Sélection du technicien existant -->
+                <!-- Sélection du technicien -->
                 <select id="f-tech">
                     <option value="OLIVIER">Technicien: OLIVIER</option>
                     <option value="FRANCK">Technicien: FRANCK</option>
                 </select>
 
-                <!-- NOUVEAU : Sélection parmi 10 collaborateurs -->
-                <label for="f-collab" style="font-size: 13px; font-weight: bold; color: #333; margin-top: 10px; display: block;">👥 Dossier pris par (Collaborateur) :</label>
+                <!-- NOUVEAU : Sélection du collaborateur qui a pris la commande (10 noms) -->
+                <label for="f-collab" style="font-size: 13px; font-weight: bold; color: #333; margin-top: 10px; display: block;">👥 Dossier pris par :</label>
                 <select id="f-collab">
                     <option value="">-- Choisir le collaborateur --</option>
-                    <option value="FRANCK">franck</option>
-                    <option value="OLIVIER">olivier</option>
-                    <option value="HICHEM">hichem</option>
-                    <option value="ABDENOUR">abdenour</option>
-                    <option value="BRICE">brice</option>
-                    <option value="DAVID PERIS">david peris</option>
-                    <option value="YLIAN">ylian</option>
-                    <option value="DAVID BES">david bes</option>
-                    <option value="YVES">yves</option>
+                    <option value="Nom 1">Nom 1</option>
+                    <option value="Nom 2">Nom 2</option>
+                    <option value="Nom 3">Nom 3</option>
+                    <option value="Nom 4">Nom 4</option>
+                    <option value="Nom 5">Nom 5</option>
+                    <option value="Nom 6">Nom 6</option>
+                    <option value="Nom 7">Nom 7</option>
+                    <option value="Nom 8">Nom 8</option>
+                    <option value="Nom 9">Nom 9</option>
                     <option value="Nom 10">Nom 10</option>
                 </select>
 
@@ -200,20 +200,20 @@
 
 <script>
     // --- CONFIGURATION ---
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxun6gulkWcWTTAfD9Nv57T-39RjFECiVPu_kSLHCWq5DsqVvBVZUz_0dMx4WHC9GI9/exec"; 
-    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
-    const UPLOAD_PRESET = "CATALOGUE"; 
+    var SHEET_URL = "https://script.google.com/macros/s/AKfycbxun6gulkWcWTTAfD9Nv57T-39RjFECiVPu_kSLHCWq5DsqVvBVZUz_0dMx4WHC9GI9/exec"; 
+    var CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpxyoa6d5/image/upload";
+    var UPLOAD_PRESET = "CATALOGUE"; 
 
-    let catalogue = [];
-    let idChoisi = null;
-    let tempPhotoURL = null;
+    var catalogue = [];
+    var idChoisi = null;
+    var tempPhotoURL = null;
 
     // --- CONNEXION ---
     async function verifierConnexion() {
-        const email = document.getElementById('l-email').value.trim();
-        const code = document.getElementById('l-code').value.trim();
-        const errEl = document.getElementById('login-error');
-        const btnLogin = document.getElementById('btn-login');
+        var email = document.getElementById('l-email').value.trim();
+        var code = document.getElementById('l-code').value.trim();
+        var errEl = document.getElementById('login-error');
+        var btnLogin = document.getElementById('btn-login');
 
         if(!email || !code) {
             alert("⚠️ Erreur : L'email ou le code est vide.");
@@ -225,13 +225,13 @@
         btnLogin.innerText = "⏳ Vérification...";
 
         try {
-            const response = await fetch(SHEET_URL, {
+            var response = await fetch(SHEET_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({ action: "login", email: email, code: code })
             });
 
-            const textResponse = await response.text();
+            var textResponse = await response.text();
 
             if (textResponse.trim() === "OK" || textResponse.trim() === "Success") {
                 localStorage.setItem('express_mb_logged', 'true');
@@ -265,7 +265,7 @@
     // --- CHARGEMENT ---
     async function chargerDonnees() {
         try {
-            const response = await fetch(SHEET_URL);
+            var response = await fetch(SHEET_URL);
             catalogue = await response.json();
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('page-user').classList.remove('hidden');
@@ -275,7 +275,7 @@
 
     // --- NAVIGATION ---
     function changerPage(n) {
-        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.page').forEach(function(p) { p.classList.add('hidden'); });
         document.getElementById('page-'+n).classList.remove('hidden');
         if(n === 'admin') initTableAdmin();
     }
@@ -283,22 +283,22 @@
 
     // --- LOGIQUE CATALOGUE ---
     function initMarques() {
-        const sel = document.getElementById('u-marque');
-        const marques = [...new Set(catalogue.map(c => c.marque.trim().toUpperCase()))].sort();
+        var sel = document.getElementById('u-marque');
+        var marques = [...new Set(catalogue.map(function(c) { return c.marque.trim().toUpperCase(); }))].sort();
         sel.innerHTML = '<option value="">-- Choisir Marque --</option>' + 
-                        marques.map(m => `<option value="${m}">${m}</option>`).join('');
+                        marques.map(function(m) { return '<option value="' + m + '">' + m + '</option>'; }).join('');
     }
 
     function majFamilles() {
-        const m = document.getElementById('u-marque').value;
-        const sel = document.getElementById('u-type-cle');
+        var m = document.getElementById('u-marque').value;
+        var sel = document.getElementById('u-type-cle');
         
-        const types = [...new Set(catalogue
-            .filter(c => String(c.marque || '').trim().toUpperCase() === String(m).trim().toUpperCase())
-            .map(c => String(c.type_cle || '').trim())
+        var types = [...new Set(catalogue
+            .filter(function(c) { return String(c.marque || '').trim().toUpperCase() === String(m).trim().toUpperCase(); })
+            .map(function(c) { return String(c.type_cle || '').trim(); })
         )].filter(Boolean).sort();
         
-        sel.innerHTML = '<option value="">-- Type --</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
+        sel.innerHTML = '<option value="">-- Type --</option>' + types.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
         sel.disabled = false;
         
         document.getElementById('u-type-puce').innerHTML = '<option value="">-- Puce --</option>';
@@ -307,35 +307,35 @@
     }
 
     function majPuces() {
-        const m = document.getElementById('u-marque').value;
-        const t = document.getElementById('u-type-cle').value;
-        const sel = document.getElementById('u-type-puce');
+        var m = document.getElementById('u-marque').value;
+        var t = document.getElementById('u-type-cle').value;
+        var sel = document.getElementById('u-type-puce');
         
-        const puces = [...new Set(catalogue
-            .filter(c => String(c.marque || '').trim().toUpperCase() === String(m).trim().toUpperCase() && String(c.type_cle || '').trim() === String(t).trim())
-            .map(c => String(c.type_puce || '').trim())
+        var puces = [...new Set(catalogue
+            .filter(function(c) { return String(c.marque || '').trim().toUpperCase() === String(m).trim().toUpperCase() && String(c.type_cle || '').trim() === String(t).trim(); })
+            .map(function(c) { return String(c.type_puce || '').trim(); })
         )].filter(Boolean).sort();
         
-        sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(p => `<option value="${p}">${p}</option>`).join('');
+        sel.innerHTML = '<option value="">-- Puce --</option>' + puces.map(function(p) { return '<option value="' + p + '">' + p + '</option>'; }).join('');
         sel.disabled = false;
         document.getElementById('u-grille-container').classList.add('hidden');
     }
 
     function majGrille() {
-        const m = document.getElementById('u-marque').value.trim().toUpperCase();
-        const t = document.getElementById('u-type-cle').value.trim().toUpperCase();
-        const p = document.getElementById('u-type-puce').value.trim().toUpperCase();
+        var m = document.getElementById('u-marque').value.trim().toUpperCase();
+        var t = document.getElementById('u-type-cle').value.trim().toUpperCase();
+        var p = document.getElementById('u-type-puce').value.trim().toUpperCase();
 
         if(!m || !t || !p) return;
 
-        const liste = catalogue.filter(c => {
-            const marqueSheet = String(c.marque || '').trim().toUpperCase();
-            const typeSheet = String(c.type_cle || '').trim().toUpperCase();
-            const puceSheet = String(c.type_puce || '').trim().toUpperCase();
+        var liste = catalogue.filter(function(c) {
+            var marqueSheet = String(c.marque || '').trim().toUpperCase();
+            var typeSheet = String(c.type_cle || '').trim().toUpperCase();
+            var puceSheet = String(c.type_puce || '').trim().toUpperCase();
             return marqueSheet === m && typeSheet === t && puceSheet === p;
         });
         
-        const grille = document.getElementById('grille-cles');
+        var grille = document.getElementById('grille-cles');
         
         if (liste.length === 0) {
             grille.innerHTML = '<p style="color:var(--danger); text-align:center; padding:10px; grid-column:1/-1;">⚠️ Aucune clé trouvée.</p>';
@@ -343,15 +343,14 @@
             return;
         }
 
-        grille.innerHTML = liste.map(c => {
-            const imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
-            return `
-                <div class="key-item" onclick="selectionnerCle('${c.id}', this)">
-                    <img src="${imageSrc}">
-                    <div class="price-tag"><b>Double:</b> <span style="color:var(--success)">${c.prix || 'N/A'}€</span></div>
-                    <div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">${c.prix_akl || 'N/A'}€</span></div>
-                    <div style="font-size: 0.9em; margin-top: 5px; color: #666;"><i>${c.commentaire || ''}</i></div>
-                </div>`;
+        grille.innerHTML = liste.map(function(c) {
+            var imageSrc = c.image ? c.image : 'https://via.placeholder.com/150?text=Pas+d+image';
+            return '<div class="key-item" onclick="selectionnerCle(\'' + c.id + '\', this)">' +
+                   '<img src="' + imageSrc + '">' +
+                   '<div class="price-tag"><b>Double:</b> <span style="color:var(--success)">' + (c.prix || 'N/A') + '€</span></div>' +
+                   '<div class="price-tag"><b>AKL:</b> <span style="color:var(--akl)">' + (c.prix_akl || 'N/A') + '€</span></div>' +
+                   '<div style="font-size: 0.9em; margin-top: 5px; color: #666;"><i>' + (c.commentaire || '') + '</i></div>' +
+                   '</div>';
         }).join('');
 
         document.getElementById('u-grille-container').classList.remove('hidden');
@@ -359,45 +358,45 @@
 
     function selectionnerCle(id, el) {
         idChoisi = id;
-        document.querySelectorAll('.key-item').forEach(i => i.classList.remove('selected'));
+        document.querySelectorAll('.key-item').forEach(function(i) { i.classList.remove('selected'); });
         el.classList.add('selected');
         document.getElementById('btn-valider').style.display = 'block';
     }
 
     function majPrixRecap() {
-        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
+        var cle = catalogue.find(function(c) { return String(c.id) === String(idChoisi); });
         if(!cle) return;
-        const typeMission = document.getElementById('f-mission').value;
-        const prix = typeMission === "PERTE TOTALE" ? (cle.prix_akl || "Sur devis") : cle.prix;
-        document.getElementById('recap-cle').innerHTML = `<b>${cle.marque}</b> - ${cle.type_cle}<br>Puce: ${cle.type_puce}<br>Tarif: <b>${prix}€</b>`;
+        var typeMission = document.getElementById('f-mission').value;
+        var prix = typeMission === "PERTE TOTALE" ? (cle.prix_akl || "Sur devis") : cle.prix;
+        document.getElementById('recap-cle').innerHTML = '<b>' + cle.marque + '</b> - ' + cle.type_cle + '<br>Puce: ' + cle.type_puce + '<br>Tarif: <b>' + prix + '€</b>';
     }
 
     function ouvrirFormulaire() { majPrixRecap(); changerPage('formulaire'); }
 
     // Fonction unique combinant l'ajout à l'agenda et l'envoi WhatsApp en un seul clic
     async function validerEtEnvoyerTout() {
-        const cle = catalogue.find(c => String(c.id) === String(idChoisi));
-        const mission = document.getElementById('f-mission').value;
-        const tech = document.getElementById('f-tech').value;
-        const collab = document.getElementById('f-collab').value; // Récupération du collaborateur sélectionné
-        const client = document.getElementById('f-client').value;
-        const immat = document.getElementById('f-immat').value;
-        const telClient = document.getElementById('f-tel').value;
-        const dateRdv = document.getElementById('f-date').value;
-        const heureRdv = document.getElementById('f-heure').value;
-        const noteIntervention = document.getElementById('f-notes').value || "Aucune";
+        var cle = catalogue.find(function(c) { return String(c.id) === String(idChoisi); });
+        var mission = document.getElementById('f-mission').value;
+        var tech = document.getElementById('f-tech').value;
+        var collab = document.getElementById('f-collab').value; // Récupération du collaborateur sélectionné
+        var client = document.getElementById('f-client').value;
+        var immat = document.getElementById('f-immat').value;
+        var telClient = document.getElementById('f-tel').value;
+        var dateRdv = document.getElementById('f-date').value;
+        var heureRdv = document.getElementById('f-heure').value;
+        var noteIntervention = document.getElementById('f-notes').value || "Aucune";
 
         if (!dateRdv || !heureRdv) {
             alert("⚠️ Veuillez renseigner la date et l'heure du rendez-vous.");
             return;
         }
 
-        const btnMain = document.querySelector('.btn-main-action');
+        var btnMain = document.querySelector('.btn-main-action');
         btnMain.disabled = true;
         btnMain.innerText = "⏳ Traitement en cours...";
 
         // 1. Enregistrement automatique dans l'agenda via Apps Script en arrière-plan
-        const payload = {
+        var payload = {
             action: "add_calendar",
             tech: tech,
             collab: collab,
@@ -411,12 +410,12 @@
         };
 
         try {
-            const response = await fetch(SHEET_URL, {
+            var response = await fetch(SHEET_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(payload)
             });
-            const result = await response.text();
+            var result = await response.text();
 
             if (result.trim() !== "OK") {
                 alert("⚠️ Erreur lors de l'ajout à l'agenda : " + result);
@@ -429,43 +428,43 @@
         }
 
         // 2. Ouverture immédiate de WhatsApp pour prévenir le technicien
-        const prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
-        const telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
+        var prix = mission === "PERTE TOTALE" ? (cle.prix_akl || "S/D") : cle.prix;
+        var telTech = (tech === "OLIVIER") ? "33749504047" : "33666824460";
 
-        const texte = `🚀 *MISSION - ${tech}* \n\n` +
-                    `👥 *Pris en charge par:* ${collab || 'Non spécifié'}\n` +
-                    `📍 *Type:* ${mission}\n` +
-                    `👤 *Client:* ${client}\n` +
-                    `🚗 *Immat:* ${immat}\n` +
-                    `📱 *Tel:* ${telClient}\n` +
-                    `📅 *Date RDV:* ${dateRdv}\n` +
-                    `⏰ *Heure RDV:* ${heureRdv}\n\n` +
-                    `🔑 *Clé:* ${cle.marque} ${cle.type_cle}\n` +
-                    `💰 *Prix:* ${prix}€\n` +
-                    `📝 *Lieu:* ${noteIntervention}\n\n` +
-                    `🖼 *Photo:* ${cle.image}`;
+        var texte = "🚀 *MISSION - " + tech + "* \n\n" +
+                    "👥 *Pris en charge par:* " + (collab || 'Non spécifié') + "\n" +
+                    "📍 *Type:* " + mission + "\n" +
+                    "👤 *Client:* " + client + "\n" +
+                    "🚗 *Immat:* " + immat + "\n" +
+                    "📱 *Tel:* " + telClient + "\n" +
+                    "📅 *Date RDV:* " + dateRdv + "\n" +
+                    "⏰ *Heure RDV:* " + heureRdv + "\n\n" +
+                    "🔑 *Clé:* " + cle.marque + " " + cle.type_cle + "\n" +
+                    "💰 *Prix:* " + prix + "€\n" +
+                    "📝 *Lieu:* " + noteIntervention + "\n\n" +
+                    "🖼 *Photo:* " + cle.image;
 
-        window.open(`https://wa.me/${telTech}?text=${encodeURIComponent(texte)}`, '_blank');
+        window.open("https://wa.me/" + telTech + "?text=" + encodeURIComponent(texte), '_blank');
     }
 
     // --- ZONE ADMIN ---
     async function uploadPhoto(input) {
-        const file = input.files[0]; if(!file) return;
+        var file = input.files[0]; if(!file) return;
         document.getElementById('upload-status').innerText = "⏳ Envoi...";
-        const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', UPLOAD_PRESET);
+        var fd = new FormData(); fd.append('file', file); fd.append('upload_preset', UPLOAD_PRESET);
         try {
-            const res = await fetch(CLOUDINARY_URL, { method:'POST', body:fd }).then(r => r.json());
+            var res = await fetch(CLOUDINARY_URL, { method:'POST', body:fd }).then(function(r) { return r.json(); });
             tempPhotoURL = res.secure_url;
             document.getElementById('upload-status').innerText = "✅ OK";
         } catch(e) { alert("Erreur photo Cloudinary"); }
     }
 
     async function ajouterCleGoogle() {
-        const btn = document.getElementById('btn-save');
-        const idExistante = document.getElementById('a-id').value;
+        var btn = document.getElementById('btn-save');
+        var idExistante = document.getElementById('a-id').value;
         btn.disabled = true; btn.innerText = "⏳ Enregistrement...";
 
-        const data = {
+        var data = {
             action: idExistante ? "update" : "add",
             id: idExistante || "ID-"+Date.now(),
             marque: document.getElementById('a-marque').value.toUpperCase(),
@@ -482,7 +481,7 @@
     }
 
     function preparerModification(id) {
-        const cle = catalogue.find(c => String(c.id) === String(id)); if(!cle) return;
+        var cle = catalogue.find(function(c) { return String(c.id) === String(id); }); if(!cle) return;
         document.getElementById('admin-form-title').innerText = "✏️ Modifier " + cle.marque;
         document.getElementById('a-id').value = cle.id;
         document.getElementById('a-marque').value = cle.marque;
@@ -511,15 +510,16 @@
     }
 
     function initTableAdmin() {
-        document.getElementById('liste-admin').innerHTML = '<table>' + catalogue.map(c => `
-            <tr>
-                <td><img src="${c.image}" class="img-mini"></td>
-                <td><b>${c.marque}</b><br><small>${c.type_cle}</small></td>
-                <td style="text-align:right">
-                    <button onclick="preparerModification('${c.id}')" style="background:var(--secondary); color:white; margin-right:5px">✏️</button>
-                    <button onclick="supprimer('${c.id}')" style="background:var(--danger); color:white">X</button>
-                </td>
-            </tr>`).join('') + '</table>';
+        document.getElementById('liste-admin').innerHTML = '<table>' + catalogue.map(function(c) {
+            return '<tr>' +
+                   '<td><img src="' + c.image + '" class="img-mini"></td>' +
+                   '<td><b>' + c.marque + '</b><br><small>' + c.type_cle + '</small></td>' +
+                   '<td style="text-align:right">' +
+                   '<button onclick="preparerModification(\'' + c.id + '\')" style="background:var(--secondary); color:white; margin-right:5px">✏️</button>' +
+                   '<button onclick="supprimer(\'' + c.id + '\')" style="background:var(--danger); color:white">X</button>' +
+                   '</td>' +
+                   '</tr>';
+        }).join('') + '</table>';
     }
 
     window.onload = function() {
